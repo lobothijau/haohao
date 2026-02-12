@@ -22,12 +22,19 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
+            'hsk_level' => ['required', 'integer', 'between:1,6'],
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
+            'hsk_level' => $input['hsk_level'],
         ]);
+
+        $user->preference()->create([]);
+        $user->assignRole('user');
+
+        return $user;
     }
 }

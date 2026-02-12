@@ -55,12 +55,31 @@ import { store } from '@/routes/register';
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="hsk_level">HSK Level</Label>
+                    <select
+                        id="hsk_level"
+                        name="hsk_level"
+                        required
+                        :tabindex="3"
+                        class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <option value="1">HSK 1</option>
+                        <option value="2">HSK 2</option>
+                        <option value="3">HSK 3</option>
+                        <option value="4">HSK 4</option>
+                        <option value="5">HSK 5</option>
+                        <option value="6">HSK 6</option>
+                    </select>
+                    <InputError :message="errors.hsk_level" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="password">Password</Label>
                     <Input
                         id="password"
                         type="password"
                         required
-                        :tabindex="3"
+                        :tabindex="4"
                         autocomplete="new-password"
                         name="password"
                         placeholder="Password"
@@ -74,7 +93,7 @@ import { store } from '@/routes/register';
                         id="password_confirmation"
                         type="password"
                         required
-                        :tabindex="4"
+                        :tabindex="5"
                         autocomplete="new-password"
                         name="password_confirmation"
                         placeholder="Confirm password"
@@ -85,7 +104,7 @@ import { store } from '@/routes/register';
                 <Button
                     type="submit"
                     class="mt-2 w-full"
-                    tabindex="5"
+                    tabindex="6"
                     :disabled="processing"
                     data-test="register-user-button"
                 >
@@ -99,7 +118,7 @@ import { store } from '@/routes/register';
                 <TextLink
                     :href="login()"
                     class="underline underline-offset-4"
-                    :tabindex="6"
+                    :tabindex="7"
                     >Log in</TextLink
                 >
             </div>

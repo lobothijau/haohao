@@ -1,17 +1,17 @@
 <?php
 
+use App\Http\Controllers\ReadingProgressController;
+use App\Http\Controllers\StoryController;
+use App\Http\Controllers\UserVocabularyController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
-})->name('home');
+Route::get('/', [StoryController::class, 'index'])->name('home');
+Route::get('/stories/{story:slug}', [StoryController::class, 'show'])->name('stories.show');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/stories/{story}/progress', [ReadingProgressController::class, 'store'])->name('stories.progress');
+    Route::post('/vocabulary', [UserVocabularyController::class, 'store'])->name('vocabulary.store');
+    Route::delete('/vocabulary/{vocabulary}', [UserVocabularyController::class, 'destroy'])->name('vocabulary.destroy');
+});
 
 require __DIR__.'/settings.php';

@@ -1,0 +1,18 @@
+# CC-CEDICT
+# Creative Commons Attribution-ShareAlike 4.0 International License
+# Test fixture for dictionary import
+你好 你好 [ni3 hao3] /hello/hi/
+好 好 [hao3] /good/well/proper/
+大 大 [da4] /big/large/great/
+小 小 [xiao3] /small/tiny/few/
+中國 中国 [Zhong1 guo2] /China/
+人 人 [ren2] /person/people/
+我 我 [wo3] /I/me/my/
+你 你 [ni3] /you/
+他 他 [ta1] /he/him/
+她 她 [ta1] /she/her/
+是 是 [shi4] /is/are/am/
+不 不 [bu4] /not/no/
+的 的 [de5] /of/~'s (possessive particle)/
+了 了 [le5] /completed action marker/
+女 女 [nv3] /female/woman/
