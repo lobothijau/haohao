@@ -3,8 +3,6 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { Clock, BookOpen, ArrowLeft } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import ReaderControls from '@/components/stories/ReaderControls.vue';
 import WordTooltip from '@/components/stories/WordTooltip.vue';
@@ -78,12 +76,10 @@ function markComplete(): void {
         <div class="flex flex-col">
             <!-- Story Header -->
             <div class="px-4 py-5 border-b">
-                <Button variant="ghost" size="sm" class="mb-3 -ml-2" as-child>
-                    <a href="/">
-                        <ArrowLeft class="mr-1 size-4" />
-                        Kembali
-                    </a>
-                </Button>
+                <a href="/" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
+                    <ArrowLeft class="size-4" />
+                    Kembali
+                </a>
 
                 <h1 class="font-bold text-2xl">
                     {{ story.title_zh }}
@@ -94,9 +90,19 @@ function markComplete(): void {
                 <p class="mt-1 text-base">{{ story.title_id }}</p>
 
                 <div class="flex flex-wrap items-center gap-2 mt-3">
-                    <Badge variant="secondary">
+                    <span
+                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                        :class="{
+                            'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400': story.hsk_level === 1,
+                            'bg-sky-500/15 text-sky-600 dark:text-sky-400': story.hsk_level === 2,
+                            'bg-violet-500/15 text-violet-600 dark:text-violet-400': story.hsk_level === 3,
+                            'bg-amber-500/15 text-amber-600 dark:text-amber-400': story.hsk_level === 4,
+                            'bg-rose-500/15 text-rose-600 dark:text-rose-400': story.hsk_level === 5,
+                            'bg-red-500/15 text-red-600 dark:text-red-400': story.hsk_level === 6,
+                        }"
+                    >
                         HSK {{ story.hsk_level }}
-                    </Badge>
+                    </span>
                     <span class="flex items-center gap-1 text-muted-foreground text-xs">
                         <Clock class="size-3" />
                         {{ story.estimated_minutes }} min
@@ -105,14 +111,13 @@ function markComplete(): void {
                         <BookOpen class="size-3" />
                         {{ story.word_count }} kata
                     </span>
-                    <Badge
+                    <span
                         v-for="cat in story.categories"
                         :key="cat.id"
-                        variant="outline"
-                        class="text-xs"
+                        class="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
                     >
                         {{ cat.name_id }}
-                    </Badge>
+                    </span>
                 </div>
             </div>
 
@@ -141,8 +146,8 @@ function markComplete(): void {
                             >
                                 <PopoverTrigger as-child>
                                     <ruby
-                                        class="hover:bg-primary/10 rounded hover:text-primary transition-colors cursor-pointer text-center"
-                                        :class="{ 'bg-primary/10 text-primary': selectedWordId === word.id }"
+                                        class="rounded-lg transition-colors cursor-pointer text-center hover:bg-orange-500/10 hover:text-orange-600 dark:hover:text-orange-400"
+                                        :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
                                     >
                                         {{ splitPunctuation(word.surface_form).word }}
                                         <rt v-if="showPinyin" class="font-normal text-white text-center">

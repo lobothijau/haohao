@@ -3,7 +3,6 @@ import { Link, usePage, router } from '@inertiajs/vue3';
 import { Menu, LogOut, Settings, X } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { Button } from '@/components/ui/button';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import UserInfo from '@/components/UserInfo.vue';
 import { login, logout, register } from '@/routes';
 import { edit } from '@/routes/profile';
@@ -27,23 +26,23 @@ function handleLogout(): void {
 </script>
 
 <template>
-    <header class="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 border-b backdrop-blur">
-        <div class="mx-auto flex h-14 max-w-xl items-center justify-between px-4">
-            <Link href="/" class="flex items-center gap-2" @click="closeMenu">
-                <div class="flex size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                    <AppLogoIcon class="size-5 fill-current text-white dark:text-black" />
+    <header class="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur border-b">
+        <div class="flex justify-between items-center mx-auto px-4 max-w-xl h-14">
+            <Link href="/" class="flex items-center gap-2.5" @click="closeMenu">
+                <div class="flex justify-center items-center bg-gradient-to-br from-orange-400 to-pink-500 shadow-sm px-2 rounded-xl">
+                    <span class="font-bold text-white text-lg">好好</span>
                 </div>
-                <span class="text-sm font-semibold">NiHao</span>
+                <!-- <span class="font-bold text-base tracking-tight">NiHao</span> -->
             </Link>
 
-            <Button variant="ghost" size="icon" @click="toggleMenu">
+            <Button variant="ghost" size="icon" class="rounded-xl" @click="toggleMenu">
                 <component :is="menuOpen ? X : Menu" class="size-5" />
             </Button>
         </div>
 
         <!-- Mobile Menu Dropdown -->
-        <div v-if="menuOpen" class="border-b px-4 pb-4">
-            <nav class="mx-auto flex max-w-xl flex-col gap-1">
+        <div v-if="menuOpen" class="px-4 pb-4 border-b">
+            <nav class="flex flex-col gap-1 mx-auto max-w-xl">
                 <template v-if="user">
                     <div class="flex items-center gap-2 px-2 py-2">
                         <UserInfo :user="user" :show-email="true" />
@@ -51,7 +50,7 @@ function handleLogout(): void {
                     <div class="my-1 border-t" />
                     <Link
                         :href="edit()"
-                        class="hover:bg-accent flex items-center gap-2 rounded-md px-2 py-2 text-sm"
+                        class="flex items-center gap-2 hover:bg-accent px-3 py-2.5 rounded-xl text-sm"
                         @click="closeMenu"
                     >
                         <Settings class="size-4" />
@@ -60,7 +59,7 @@ function handleLogout(): void {
                     <Link
                         :href="logout()"
                         as="button"
-                        class="hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm"
+                        class="flex items-center gap-2 hover:bg-accent px-3 py-2.5 rounded-xl w-full text-sm"
                         @click="handleLogout"
                     >
                         <LogOut class="size-4" />
@@ -70,14 +69,14 @@ function handleLogout(): void {
                 <template v-else>
                     <Link
                         :href="login()"
-                        class="hover:bg-accent flex items-center gap-2 rounded-md px-2 py-2 text-sm"
+                        class="flex items-center gap-2 hover:bg-accent px-3 py-2.5 rounded-xl font-medium text-sm"
                         @click="closeMenu"
                     >
                         Log in
                     </Link>
                     <Link
                         :href="register()"
-                        class="hover:bg-accent flex items-center gap-2 rounded-md px-2 py-2 text-sm"
+                        class="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-pink-500 px-3 py-2.5 rounded-xl font-medium text-white text-sm"
                         @click="closeMenu"
                     >
                         Register

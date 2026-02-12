@@ -77,13 +77,13 @@ watch(search, () => {
                     <Input
                         v-model="search"
                         placeholder="Cari cerita..."
-                        class="pl-9"
+                        class="rounded-xl pl-9"
                     />
                 </div>
                 <div class="flex gap-2">
                     <select
                         v-model="hskLevel"
-                        class="border-input bg-background ring-offset-background h-9 flex-1 rounded-md border px-3 text-sm"
+                        class="border-input bg-background h-9 flex-1 rounded-xl border px-3 text-sm"
                     >
                         <option value="">Semua HSK</option>
                         <option
@@ -96,7 +96,7 @@ watch(search, () => {
                     </select>
                     <select
                         v-model="category"
-                        class="border-input bg-background ring-offset-background h-9 flex-1 rounded-md border px-3 text-sm"
+                        class="border-input bg-background h-9 flex-1 rounded-xl border px-3 text-sm"
                     >
                         <option value="">Semua Kategori</option>
                         <option
@@ -109,7 +109,7 @@ watch(search, () => {
                     </select>
                     <select
                         v-model="sort"
-                        class="border-input bg-background ring-offset-background h-9 flex-1 rounded-md border px-3 text-sm"
+                        class="border-input bg-background h-9 flex-1 rounded-xl border px-3 text-sm"
                     >
                         <option value="">Terbaru</option>
                         <option value="hsk_level">HSK Level</option>
@@ -146,11 +146,11 @@ watch(search, () => {
                     <Link
                         v-if="link.url"
                         :href="link.url"
-                        class="border-input inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm transition-colors"
+                        class="inline-flex h-9 items-center justify-center rounded-xl border px-3 text-sm font-medium transition-colors"
                         :class="
                             link.active
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-background hover:bg-accent'
+                                ? 'bg-gradient-to-r from-orange-400 to-pink-500 text-white border-transparent'
+                                : 'border-input bg-background hover:bg-accent'
                         "
                         preserve-state
                         v-html="link.label"
