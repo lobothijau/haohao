@@ -63,6 +63,14 @@ function updateProgress(position: number, status: string): void {
     );
 }
 
+function showPinyinBasedOnLevel(word: SentenceWord): boolean {
+    const wordLevel = word.dictionary_entry.hsk_level;
+    if (!wordLevel) {
+        return true;
+    }
+    return wordLevel >= props.story.hsk_level;
+}
+
 function markComplete(): void {
     isCompleted.value = true;
     updateProgress(props.sentences.length, 'completed');
@@ -76,7 +84,7 @@ function markComplete(): void {
         <div class="flex flex-col">
             <!-- Story Header -->
             <div class="px-4 py-5 border-b">
-                <a href="/" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
+                <a href="/" class="inline-flex items-center gap-1 mb-3 text-muted-foreground hover:text-foreground text-sm transition-colors">
                     <ArrowLeft class="size-4" />
                     Kembali
                 </a>
@@ -91,7 +99,7 @@ function markComplete(): void {
 
                 <div class="flex flex-wrap items-center gap-2 mt-3">
                     <span
-                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full font-semibold text-xs"
                         :class="{
                             'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400': story.hsk_level === 1,
                             'bg-sky-500/15 text-sky-600 dark:text-sky-400': story.hsk_level === 2,
@@ -114,7 +122,7 @@ function markComplete(): void {
                     <span
                         v-for="cat in story.categories"
                         :key="cat.id"
-                        class="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                        class="bg-muted px-2 py-0.5 rounded-full text-muted-foreground text-xs"
                     >
                         {{ cat.name_id }}
                     </span>
@@ -146,11 +154,11 @@ function markComplete(): void {
                             >
                                 <PopoverTrigger as-child>
                                     <ruby
-                                        class="rounded-lg transition-colors cursor-pointer text-center hover:bg-orange-500/10 hover:text-orange-600 dark:hover:text-orange-400"
+                                        class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 text-center transition-colors cursor-pointer"
                                         :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
                                     >
                                         {{ splitPunctuation(word.surface_form).word }}
-                                        <rt v-if="showPinyin" class="font-normal text-white text-center">
+                                        <rt v-if="showPinyin && showPinyinBasedOnLevel(word)" class="font-normal text-white text-center">
                                             {{ word.dictionary_entry.pinyin }}
                                         </rt>
                                         <rt v-else />
