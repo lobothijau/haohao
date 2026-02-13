@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
-import { BookmarkPlus, BookmarkCheck } from 'lucide-vue-next';
+import { BookmarkPlus, BookmarkCheck, Volume2 } from 'lucide-vue-next';
 import { PopoverContent } from '@/components/ui/popover';
 import { store as vocabularyStore } from '@/routes/vocabulary';
 import type { SentenceWord } from '@/types';
@@ -29,11 +29,7 @@ const hskColors: Record<number, string> = {
     6: 'bg-red-500/15 text-red-600 dark:text-red-400',
 };
 
-const placeholderExamples = [
-    { zh: '我每天都<b>学习</b>中文。', translation: 'Saya belajar bahasa Mandarin setiap hari.' },
-    { zh: '他在图书馆<b>学习</b>。', translation: 'Dia belajar di perpustakaan.' },
-    { zh: '你喜欢<b>学习</b>什么？', translation: 'Kamu suka belajar apa?' },
-];
+const examples = computed(() => props.word.dictionary_entry.examples ?? []);
 
 const scrollContainer = ref<HTMLElement | null>(null);
 const activeIndex = ref(0);
@@ -53,6 +49,13 @@ function scrollTo(index: number): void {
         return;
     }
     el.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' });
+}
+
+function playAudio(): void {
+    const url = props.word.dictionary_entry.audio_url;
+    if (url) {
+        new Audio(url).play();
+    }
 }
 
 function saveWord(): void {
@@ -82,12 +85,21 @@ function saveWord(): void {
             <p class="font-bold text-2xl">
                 {{ word.dictionary_entry.simplified }}
             </p>
-            <p class="mt-0.5 text-muted-foreground text-sm">
-                {{ word.dictionary_entry.pinyin }}
-                <span v-if="word.dictionary_entry.traditional" class="opacity-60">
-                    ({{ word.dictionary_entry.traditional }})
-                </span>
-            </p>
+            <div class="flex items-center justify-center gap-1 mt-0.5">
+                <p class="text-muted-foreground text-sm">
+                    {{ word.dictionary_entry.pinyin }}
+                    <span v-if="word.dictionary_entry.traditional" class="opacity-60">
+                        ({{ word.dictionary_entry.traditional }})
+                    </span>
+                </p>
+                <button
+                    v-if="word.dictionary_entry.audio_url"
+                    class="text-muted-foreground hover:text-orange-500 transition-colors p-0.5"
+                    @click="playAudio"
+                >
+                    <Volume2 class="size-3.5" />
+                </button>
+            </div>
         </div>
 
         <!-- Badges -->
@@ -117,18 +129,18 @@ function saveWord(): void {
         </div>
 
         <!-- Example Sentences -->
-        <div class="-mx-3 mt-2 overflow-hidden">
+        <div v-if="examples.length" class="-mx-3 mt-2 overflow-hidden">
             <div ref="scrollContainer" class="flex overflow-x-auto snap-mandatory snap-x scrollbar-none"
                 @scroll="onScroll">
-                <div v-for="(example, i) in placeholderExamples" :key="i" class="px-3 min-w-full snap-center shrink-0">
+                <div v-for="(example, i) in examples" :key="i" class="px-3 min-w-full snap-center shrink-0">
                     <div class="bg-muted/50 p-2 rounded-lg">
-                        <p class="[&>b]:font-semibold [&>b]:text-orange-500 text-sm leading-snug" v-html="example.zh" />
-                        <p class="mt-1 text-muted-foreground text-xs">{{ example.translation }}</p>
+                        <p class="text-sm leading-snug">{{ example.sentence_zh }}</p>
+                        <p v-if="example.sentence_id" class="mt-1 text-muted-foreground text-xs">{{ example.sentence_id }}</p>
                     </div>
                 </div>
             </div>
-            <div class="flex justify-center gap-1 mt-1.5">
-                <button v-for="(_, i) in placeholderExamples" :key="i" class="rounded-full size-1.5 transition-colors"
+            <div v-if="examples.length > 1" class="flex justify-center gap-1 mt-1.5">
+                <button v-for="(_, i) in examples" :key="i" class="rounded-full size-1.5 transition-colors"
                     :class="activeIndex === i ? 'bg-foreground' : 'bg-foreground/20'" @click="scrollTo(i)" />
             </div>
         </div>

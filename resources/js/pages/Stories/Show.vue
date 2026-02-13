@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Clock, BookOpen, ArrowLeft } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
@@ -12,6 +12,7 @@ import type {
     StorySentence,
     SentenceWord,
     ReadingProgress,
+    UserPreferences,
 } from '@/types';
 
 const props = defineProps<{
@@ -19,16 +20,43 @@ const props = defineProps<{
     sentences: StorySentence[];
     progress: ReadingProgress | null;
     savedVocabularyIds: number[];
+    preferences: UserPreferences | null;
 }>();
 
 const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
 
-const showPinyin = ref(true);
-const showTranslation = ref(false);
+const showPinyin = ref(props.preferences?.show_pinyin ?? true);
+const showTranslation = ref(props.preferences?.show_translation ?? false);
 const selectedWordId = ref<number | null>(null);
 const savedIds = ref<Set<number>>(new Set(props.savedVocabularyIds));
 const isCompleted = ref(props.progress?.status === 'completed');
+
+let preferenceTimer: ReturnType<typeof setTimeout>;
+
+function savePreferences(): void {
+    if (!isAuthenticated.value) {
+        return;
+    }
+    clearTimeout(preferenceTimer);
+    preferenceTimer = setTimeout(() => {
+        fetch('/preferences', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(
+                    document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
+                ),
+            },
+            body: JSON.stringify({
+                show_pinyin: showPinyin.value,
+                show_translation: showTranslation.value,
+            }),
+        });
+    }, 500);
+}
+
+watch([showPinyin, showTranslation], savePreferences);
 
 function splitPunctuation(text: string): { before: string; word: string; after: string } {
     const match = text.match(/^([\p{P}\p{S}]*)(.*?)([\p{P}\p{S}]*)$/u);

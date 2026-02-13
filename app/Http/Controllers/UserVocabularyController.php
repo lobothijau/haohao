@@ -3,13 +3,37 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserVocabulary;
+use App\Services\SrsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class UserVocabularyController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function index(Request $request): InertiaResponse
+    {
+        $vocabularies = $request->user()->vocabularies()
+            ->with(['dictionaryEntry', 'sourceStory:id,title_zh,title_id,slug'])
+            ->when($request->input('search'), function ($query, $search) {
+                $query->whereHas('dictionaryEntry', function ($q) use ($search) {
+                    $q->where('simplified', 'like', "%{$search}%")
+                        ->orWhere('pinyin', 'like', "%{$search}%")
+                        ->orWhere('meaning_id', 'like', "%{$search}%");
+                });
+            })
+            ->latest('created_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('Vocabulary/Index', [
+            'vocabularies' => $vocabularies,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function store(Request $request, SrsService $srsService): JsonResponse
     {
         $validated = $request->validate([
             'dictionary_entry_id' => ['required', 'exists:dictionary_entries,id'],
@@ -24,6 +48,8 @@ class UserVocabularyController extends Controller
                 'source_sentence_id' => $validated['source_sentence_id'] ?? null,
             ],
         );
+
+        $srsService->createCardForVocabulary($vocabulary);
 
         return response()->json(['vocabulary' => $vocabulary], 201);
     }

@@ -51,6 +51,15 @@ export type DictionaryEntry = {
     meaning_en: string | null;
     hsk_level: number | null;
     word_type: string | null;
+    audio_url: string | null;
+    examples: DictionaryExample[];
+};
+
+export type DictionaryExample = {
+    id: number;
+    sentence_zh: string;
+    sentence_pinyin: string | null;
+    sentence_id: string | null;
 };
 
 export type ReadingProgress = {
@@ -60,4 +69,16 @@ export type ReadingProgress = {
     words_saved: number;
     started_at: string | null;
     completed_at: string | null;
+};
+
+export type UserVocabularyItem = {
+    id: number;
+    dictionary_entry: DictionaryEntry;
+    source_story: { id: number; title_zh: string; title_id: string; slug: string } | null;
+    created_at: string;
+};
+
+export type UserPreferences = {
+    show_pinyin: boolean;
+    show_translation: boolean;
 };

@@ -46,11 +46,12 @@ class StoryController extends Controller
     {
         abort_unless($story->is_published, 404);
 
-        $story->load(['sentences.words.dictionaryEntry', 'categories']);
+        $story->load(['sentences.words.dictionaryEntry.examples', 'categories']);
 
         $user = auth()->user();
         $progress = null;
         $savedVocabularyIds = [];
+        $preferences = null;
 
         if ($user) {
             $progress = $story->readingProgress()
@@ -69,6 +70,8 @@ class StoryController extends Controller
                 })
                 ->pluck('dictionary_entry_id')
                 ->toArray();
+
+            $preferences = $user->preference;
         }
 
         return Inertia::render('Stories/Show', [
@@ -76,6 +79,10 @@ class StoryController extends Controller
             'sentences' => $story->sentences,
             'progress' => $progress,
             'savedVocabularyIds' => $savedVocabularyIds,
+            'preferences' => $preferences ? [
+                'show_pinyin' => $preferences->show_pinyin,
+                'show_translation' => $preferences->show_translation,
+            ] : null,
         ]);
     }
 }

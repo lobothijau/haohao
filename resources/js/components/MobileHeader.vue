@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage, router } from '@inertiajs/vue3';
-import { Menu, LogOut, Settings, Sun, Moon, X } from 'lucide-vue-next';
+import { Menu, LogOut, Settings, Sun, Moon, X, BookOpen, GraduationCap } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import UserInfo from '@/components/UserInfo.vue';
@@ -58,6 +58,23 @@ function handleLogout(): void {
                     <div class="flex items-center gap-2 px-2 py-2">
                         <UserInfo :user="user" :show-email="true" />
                     </div>
+                    <div class="my-1 border-t" />
+                    <Link
+                        href="/vocabulary"
+                        class="flex items-center gap-2 hover:bg-accent px-3 py-2.5 rounded-xl text-sm"
+                        @click="closeMenu"
+                    >
+                        <BookOpen class="size-4" />
+                        Kosakata
+                    </Link>
+                    <Link
+                        href="/review"
+                        class="flex items-center gap-2 hover:bg-accent px-3 py-2.5 rounded-xl text-sm"
+                        @click="closeMenu"
+                    >
+                        <GraduationCap class="size-4" />
+                        Latihan
+                    </Link>
                     <div class="my-1 border-t" />
                     <Link
                         :href="edit()"
