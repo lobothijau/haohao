@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { Clock, BookOpen, ArrowLeft } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
@@ -84,10 +84,10 @@ function markComplete(): void {
         <div class="flex flex-col">
             <!-- Story Header -->
             <div class="px-4 py-5 border-b">
-                <a href="/" class="inline-flex items-center gap-1 mb-3 text-muted-foreground hover:text-foreground text-sm transition-colors">
+                <Link href="/" class="inline-flex items-center gap-1 mb-3 text-muted-foreground hover:text-foreground text-sm transition-colors">
                     <ArrowLeft class="size-4" />
                     Kembali
-                </a>
+                </Link>
 
                 <h1 class="font-bold text-2xl">
                     {{ story.title_zh }}
@@ -144,7 +144,7 @@ function markComplete(): void {
             <div class="space-y-3 px-4 py-4">
                 <div v-for="sentence in sentences" :key="sentence.id" :class="showPinyin ? 'leading-[3.5]' : 'leading-loose'">
                     <!-- Chinese text with ruby pinyin -->
-                    <div class="text-xl">
+                    <div class="text-xl md:text-2xl">
                         <template v-for="word in sentence.words" :key="word.id">
                             <span v-if="splitPunctuation(word.surface_form).before">{{ splitPunctuation(word.surface_form).before }}</span>
                             <Popover
@@ -158,7 +158,7 @@ function markComplete(): void {
                                         :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
                                     >
                                         {{ splitPunctuation(word.surface_form).word }}
-                                        <rt v-if="showPinyin && showPinyinBasedOnLevel(word)" class="font-normal text-white text-center">
+                                        <rt v-if="showPinyin && showPinyinBasedOnLevel(word)" class="font-normal text-muted-foreground dark:text-white text-center antialiased">
                                             {{ word.dictionary_entry.pinyin }}
                                         </rt>
                                         <rt v-else />
@@ -176,7 +176,7 @@ function markComplete(): void {
                         </template>
                     </div>
                     <!-- Per-sentence translation -->
-                    <p v-if="showTranslation" class="mt-1 text-muted-foreground text-sm">
+                    <p v-if="showTranslation" class="mt-1 text-muted-foreground text-sm md:text-base lg:text-lg">
                         {{ sentence.translation_id }}
                     </p>
                 </div>
