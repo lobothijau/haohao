@@ -78,8 +78,8 @@ function saveWord(): void {
 </script>
 
 <template>
-    <PopoverContent side="top" align="center" :side-offset="8"
-        class="bg-popover/95 shadow-lg backdrop-blur-sm p-3 border-border/60 rounded-xl w-60">
+    <PopoverContent side="top" align="center" :side-offset="8" :collision-padding="{ left: 16, right: 16, top: 8, bottom: 8 }"
+        class="bg-popover/95 shadow-lg backdrop-blur-sm p-3 border-border/60 rounded-xl w-72 max-w-[calc(100vw-2rem)]">
         <!-- Character + Pinyin -->
         <div class="text-center">
             <p class="font-bold text-2xl">

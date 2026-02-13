@@ -23,9 +23,9 @@ class HskWordListLoader
 
         try {
             // Skip header row
-            fgetcsv($handle);
+            fgetcsv($handle, escape: '\\');
 
-            while (($row = fgetcsv($handle)) !== false) {
+            while (($row = fgetcsv($handle, escape: '\\')) !== false) {
                 if (count($row) < 2) {
                     continue;
                 }

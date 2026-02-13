@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UserVocabulary;
 use App\Services\SrsService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
@@ -33,7 +33,7 @@ class UserVocabularyController extends Controller
         ]);
     }
 
-    public function store(Request $request, SrsService $srsService): JsonResponse
+    public function store(Request $request, SrsService $srsService): RedirectResponse
     {
         $validated = $request->validate([
             'dictionary_entry_id' => ['required', 'exists:dictionary_entries,id'],
@@ -51,7 +51,7 @@ class UserVocabularyController extends Controller
 
         $srsService->createCardForVocabulary($vocabulary);
 
-        return response()->json(['vocabulary' => $vocabulary], 201);
+        return back();
     }
 
     public function destroy(Request $request, UserVocabulary $vocabulary): Response

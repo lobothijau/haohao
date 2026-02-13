@@ -15,8 +15,13 @@
 - [ ] Track next review date based on SRS algorithm
 
 ### 3. Real Dictionary Examples in WordTooltip
-- [ ] Load actual DictionaryExample data instead of placeholder sentences
-- [ ] Display example sentence with pinyin and translation
+- [x] Load actual DictionaryExample data instead of placeholder sentences
+- [x] Display example sentence with pinyin and translation
+
+### 3b. Example Sentences for SRS Flashcards
+- [x] Show example sentences on revealed flashcard (with pulsing placeholder when none exist)
+- [ ] Populate `dictionary_examples` table with real example data (batch import or AI generation)
+- [ ] Add sentence_pinyin display in flashcard examples
 
 ### 4. Audio Playback
 - [ ] Add pronunciation button to WordTooltip

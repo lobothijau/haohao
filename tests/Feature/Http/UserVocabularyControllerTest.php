@@ -10,13 +10,12 @@ it('saves a word to vocabulary', function () {
     $entry = DictionaryEntry::factory()->create();
     $story = Story::factory()->create();
 
-    $response = $this->actingAs($user)->postJson(route('vocabulary.store'), [
+    $response = $this->actingAs($user)->post(route('vocabulary.store'), [
         'dictionary_entry_id' => $entry->id,
         'source_story_id' => $story->id,
     ]);
 
-    $response->assertCreated();
-    $response->assertJsonPath('vocabulary.dictionary_entry_id', $entry->id);
+    $response->assertRedirect();
 
     $this->assertDatabaseHas('user_vocabularies', [
         'user_id' => $user->id,
@@ -34,11 +33,11 @@ it('prevents duplicate vocabulary entries', function () {
         'dictionary_entry_id' => $entry->id,
     ]);
 
-    $response = $this->actingAs($user)->postJson(route('vocabulary.store'), [
+    $response = $this->actingAs($user)->post(route('vocabulary.store'), [
         'dictionary_entry_id' => $entry->id,
     ]);
 
-    $response->assertCreated();
+    $response->assertRedirect();
     $this->assertDatabaseCount('user_vocabularies', 1);
 });
 
@@ -66,11 +65,11 @@ it('prevents users from deleting other users vocabulary', function () {
 it('requires authentication to save vocabulary', function () {
     $entry = DictionaryEntry::factory()->create();
 
-    $response = $this->postJson(route('vocabulary.store'), [
+    $response = $this->post(route('vocabulary.store'), [
         'dictionary_entry_id' => $entry->id,
     ]);
 
-    $response->assertUnauthorized();
+    $response->assertRedirect(route('login'));
 });
 
 it('requires authentication to delete vocabulary', function () {
@@ -84,10 +83,9 @@ it('requires authentication to delete vocabulary', function () {
 it('validates dictionary_entry_id exists', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->postJson(route('vocabulary.store'), [
+    $response = $this->actingAs($user)->post(route('vocabulary.store'), [
         'dictionary_entry_id' => 99999,
     ]);
 
-    $response->assertUnprocessable();
-    $response->assertJsonValidationErrors(['dictionary_entry_id']);
+    $response->assertSessionHasErrors(['dictionary_entry_id']);
 });

@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { Eye, EyeOff, Languages, CheckCircle } from 'lucide-vue-next';
+import { Eye, EyeOff, Languages, Minus, Plus } from 'lucide-vue-next';
 
 defineProps<{
     showPinyin: boolean;
     showTranslation: boolean;
-    isCompleted: boolean;
-    isAuthenticated: boolean;
 }>();
 
 defineEmits<{
     'toggle-pinyin': [];
     'toggle-translation': [];
-    'mark-complete': [];
+    'increase-font': [];
+    'decrease-font': [];
 }>();
 </script>
 
@@ -42,22 +41,19 @@ defineEmits<{
             </button>
         </div>
 
-        <div v-if="isAuthenticated" class="flex items-center">
+        <div class="flex items-center gap-1">
             <button
-                v-if="!isCompleted"
-                class="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-600"
-                @click="$emit('mark-complete')"
+                class="inline-flex items-center justify-center rounded-full bg-muted size-7 text-muted-foreground transition-colors hover:bg-muted/80"
+                @click="$emit('decrease-font')"
             >
-                <CheckCircle class="size-3.5" />
-                Selesai
+                <Minus class="size-3.5" />
             </button>
-            <span
-                v-else
-                class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+            <button
+                class="inline-flex items-center justify-center rounded-full bg-muted size-7 text-muted-foreground transition-colors hover:bg-muted/80"
+                @click="$emit('increase-font')"
             >
-                <CheckCircle class="size-3.5" />
-                Selesai
-            </span>
+                <Plus class="size-3.5" />
+            </button>
         </div>
     </div>
 </template>

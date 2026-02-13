@@ -28,7 +28,7 @@ class SrsReviewController extends Controller
     public function cards(Request $request): JsonResponse
     {
         $cards = $request->user()->srsCards()
-            ->with('dictionaryEntry')
+            ->with('dictionaryEntry.examples')
             ->where('due_at', '<=', now())
             ->orderBy('due_at')
             ->limit(10)

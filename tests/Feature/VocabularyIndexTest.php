@@ -60,10 +60,10 @@ test('vocabulary store creates an srs card automatically', function () {
     $entry = DictionaryEntry::factory()->create();
 
     $this->actingAs($user)
-        ->postJson(route('vocabulary.store'), [
+        ->post(route('vocabulary.store'), [
             'dictionary_entry_id' => $entry->id,
         ])
-        ->assertCreated();
+        ->assertRedirect();
 
     $this->assertDatabaseHas('user_vocabularies', [
         'user_id' => $user->id,

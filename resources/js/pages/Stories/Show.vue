@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
-import { Clock, BookOpen, ArrowLeft } from 'lucide-vue-next';
+import { Clock, BookOpen, ArrowLeft, CheckCircle } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import ReaderControls from '@/components/stories/ReaderControls.vue';
@@ -31,6 +31,22 @@ const showTranslation = ref(props.preferences?.show_translation ?? false);
 const selectedWordId = ref<number | null>(null);
 const savedIds = ref<Set<number>>(new Set(props.savedVocabularyIds));
 const isCompleted = ref(props.progress?.status === 'completed');
+
+const fontSizeSteps = [16, 18, 20, 24, 28, 32];
+const fontSizeIndex = ref(2); // default 20px (text-xl)
+const fontSize = computed(() => `${fontSizeSteps[fontSizeIndex.value]}px`);
+
+function increaseFontSize(): void {
+    if (fontSizeIndex.value < fontSizeSteps.length - 1) {
+        fontSizeIndex.value++;
+    }
+}
+
+function decreaseFontSize(): void {
+    if (fontSizeIndex.value > 0) {
+        fontSizeIndex.value--;
+    }
+}
 
 let preferenceTimer: ReturnType<typeof setTimeout>;
 
@@ -161,18 +177,17 @@ function markComplete(): void {
             <ReaderControls
                 :show-pinyin="showPinyin"
                 :show-translation="showTranslation"
-                :is-completed="isCompleted"
-                :is-authenticated="isAuthenticated"
                 @toggle-pinyin="showPinyin = !showPinyin"
                 @toggle-translation="showTranslation = !showTranslation"
-                @mark-complete="markComplete"
+                @increase-font="increaseFontSize"
+                @decrease-font="decreaseFontSize"
             />
 
             <!-- Full Story Text -->
             <div class="space-y-3 px-4 py-4">
-                <div v-for="sentence in sentences" :key="sentence.id" :class="showPinyin ? 'leading-[3.5]' : 'leading-loose'">
+                <div v-for="sentence in sentences" :key="sentence.id" :class="showPinyin ? 'leading-[2.5]' : 'leading-relaxed'">
                     <!-- Chinese text with ruby pinyin -->
-                    <div class="text-xl md:text-2xl">
+                    <div :style="{ fontSize }">
                         <template v-for="word in sentence.words" :key="word.id">
                             <span v-if="splitPunctuation(word.surface_form).before">{{ splitPunctuation(word.surface_form).before }}</span>
                             <Popover
@@ -208,6 +223,25 @@ function markComplete(): void {
                         {{ sentence.translation_id }}
                     </p>
                 </div>
+            </div>
+
+            <!-- Done Button -->
+            <div v-if="isAuthenticated" class="flex justify-center px-4 pb-8 pt-2">
+                <button
+                    v-if="!isCompleted"
+                    class="inline-flex items-center gap-2 rounded-full bg-muted px-6 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-600"
+                    @click="markComplete"
+                >
+                    <CheckCircle class="size-4" />
+                    Tandai Selesai
+                </button>
+                <span
+                    v-else
+                    class="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-6 py-2.5 text-sm font-medium text-emerald-600 dark:text-emerald-400"
+                >
+                    <CheckCircle class="size-4" />
+                    Selesai
+                </span>
             </div>
         </div>
     </MobileLayout>

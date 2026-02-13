@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { ArrowLeft, RotateCcw, Check } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
+import RatingButtons from '@/components/RatingButtons.vue';
 import type { DictionaryEntry } from '@/types';
 
 type SrsCardItem = {
@@ -25,6 +26,7 @@ const sessionDone = ref(false);
 const reviewStartTime = ref<number>(0);
 
 const currentCard = computed(() => cards.value[currentIndex.value] ?? null);
+const examples = computed(() => currentCard.value?.dictionary_entry.examples ?? []);
 const progress = computed(() => totalDue.value > 0 ? (reviewedCount.value / totalDue.value) * 100 : 0);
 
 async function fetchCards(): Promise<void> {
@@ -80,7 +82,18 @@ async function rate(rating: number): Promise<void> {
     }
 }
 
-onMounted(fetchCards);
+function onKeydown(e: KeyboardEvent): void {
+    if ((e.key === ' ' || e.key === 'Enter') && !revealed.value && currentCard.value) {
+        e.preventDefault();
+        reveal();
+    }
+}
+
+onMounted(() => {
+    fetchCards();
+    window.addEventListener('keydown', onKeydown);
+});
+onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 </script>
 
 <template>
@@ -93,37 +106,37 @@ onMounted(fetchCards);
                     <ArrowLeft class="size-4" />
                 </Link>
                 <h1 class="font-bold text-xl">Latihan</h1>
-                <span v-if="totalDue > 0" class="ml-auto text-sm text-muted-foreground">
+                <span v-if="totalDue > 0" class="ml-auto text-muted-foreground text-sm">
                     {{ reviewedCount }}/{{ totalDue }}
                 </span>
             </div>
 
             <!-- Progress Bar -->
-            <div v-if="totalDue > 0" class="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div v-if="totalDue > 0" class="bg-muted rounded-full h-1.5 overflow-hidden">
                 <div
-                    class="h-full bg-gradient-to-r from-orange-400 to-pink-500 rounded-full transition-all duration-300"
+                    class="bg-gradient-to-r from-orange-400 to-pink-500 rounded-full h-full transition-all duration-300"
                     :style="{ width: `${progress}%` }"
                 />
             </div>
 
             <!-- Loading -->
-            <div v-if="loading" class="flex items-center justify-center py-20">
-                <RotateCcw class="size-6 animate-spin text-muted-foreground" />
+            <div v-if="loading" class="flex justify-center items-center py-20">
+                <RotateCcw class="size-6 text-muted-foreground animate-spin" />
             </div>
 
             <!-- Session Done -->
-            <div v-else-if="sessionDone" class="flex flex-col items-center justify-center py-16 text-center">
-                <div class="flex items-center justify-center size-16 rounded-full bg-emerald-500/15 mb-4">
+            <div v-else-if="sessionDone" class="flex flex-col justify-center items-center py-16 text-center">
+                <div class="flex justify-center items-center bg-emerald-500/15 mb-4 rounded-full size-16">
                     <Check class="size-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <p class="text-lg font-bold">Selesai!</p>
-                <p v-if="reviewedCount > 0" class="text-muted-foreground text-sm mt-1">
+                <p class="font-bold text-lg">Selesai!</p>
+                <p v-if="reviewedCount > 0" class="mt-1 text-muted-foreground text-sm">
                     Kamu sudah meninjau {{ reviewedCount }} kartu.
                 </p>
-                <p v-else class="text-muted-foreground text-sm mt-1">
+                <p v-else class="mt-1 text-muted-foreground text-sm">
                     Tidak ada kartu yang perlu ditinjau sekarang.
                 </p>
-                <Link href="/" class="mt-4 text-sm text-orange-500 hover:text-orange-600">
+                <Link href="/" class="mt-4 text-orange-500 hover:text-orange-600 text-sm">
                     Kembali ke cerita
                 </Link>
             </div>
@@ -131,11 +144,11 @@ onMounted(fetchCards);
             <!-- Flashcard -->
             <div v-else-if="currentCard" class="flex flex-col items-center">
                 <div
-                    class="bg-card border rounded-2xl w-full p-8 flex flex-col items-center justify-center min-h-[280px] cursor-pointer select-none"
+                    class="flex flex-col justify-center items-center bg-card p-8 border rounded-2xl w-full min-h-[280px] cursor-pointer select-none"
                     @click="!revealed && reveal()"
                 >
                     <!-- Front: Character -->
-                    <p class="font-bold text-5xl mb-4">
+                    <p class="mb-4 font-bold text-5xl">
                         {{ currentCard.dictionary_entry.simplified }}
                     </p>
 
@@ -144,53 +157,34 @@ onMounted(fetchCards);
                         <p class="text-muted-foreground text-lg">
                             {{ currentCard.dictionary_entry.pinyin }}
                         </p>
-                        <div class="mt-3 text-center border-t pt-3 w-full">
+                        <div class="mt-3 pt-3 border-t w-full text-center">
                             <p v-if="currentCard.dictionary_entry.meaning_id" class="text-sm">
                                 {{ currentCard.dictionary_entry.meaning_id }}
                             </p>
-                            <p v-if="currentCard.dictionary_entry.meaning_en" class="text-xs text-muted-foreground mt-1">
+                            <p v-if="currentCard.dictionary_entry.meaning_en" class="mt-1 text-muted-foreground text-xs">
                                 {{ currentCard.dictionary_entry.meaning_en }}
                             </p>
+                        </div>
+
+                        <!-- Example Sentences -->
+                        <div v-if="examples.length" class="mt-3 pt-3 border-t w-full">
+                            <p class="text-muted-foreground text-[10px] uppercase tracking-wider mb-2">Contoh</p>
+                            <div v-for="(example, i) in examples.slice(0, 2)" :key="i" class="bg-muted/50 rounded-lg p-2" :class="{ 'mt-2': i > 0 }">
+                                <p class="text-sm leading-snug">{{ example.sentence_zh }}</p>
+                                <p v-if="example.sentence_pinyin" class="mt-0.5 text-muted-foreground text-xs">{{ example.sentence_pinyin }}</p>
+                                <p v-if="example.sentence_id" class="mt-0.5 text-muted-foreground text-xs">{{ example.sentence_id }}</p>
+                            </div>
                         </div>
                     </template>
 
                     <!-- Tap hint -->
-                    <p v-else class="text-muted-foreground text-xs mt-4">
-                        Ketuk untuk melihat jawaban
+                    <p v-else class="mt-4 text-muted-foreground text-xs">
+                        Tekan spasi, enter, klik atau sentuh untuk melihat jawaban
                     </p>
                 </div>
 
                 <!-- Rating buttons (only when revealed) -->
-                <div v-if="revealed" class="grid grid-cols-4 gap-2 w-full mt-4">
-                    <button
-                        class="flex flex-col items-center gap-1 rounded-xl border py-3 text-xs font-medium transition-colors hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-600"
-                        @click="rate(1)"
-                    >
-                        <span class="text-base">😵</span>
-                        Lagi
-                    </button>
-                    <button
-                        class="flex flex-col items-center gap-1 rounded-xl border py-3 text-xs font-medium transition-colors hover:bg-amber-500/10 hover:border-amber-500/30 hover:text-amber-600"
-                        @click="rate(2)"
-                    >
-                        <span class="text-base">😰</span>
-                        Sulit
-                    </button>
-                    <button
-                        class="flex flex-col items-center gap-1 rounded-xl border py-3 text-xs font-medium transition-colors hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-600"
-                        @click="rate(3)"
-                    >
-                        <span class="text-base">😊</span>
-                        Bagus
-                    </button>
-                    <button
-                        class="flex flex-col items-center gap-1 rounded-xl border py-3 text-xs font-medium transition-colors hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-600"
-                        @click="rate(4)"
-                    >
-                        <span class="text-base">😎</span>
-                        Mudah
-                    </button>
-                </div>
+                <RatingButtons v-if="revealed" class="mt-4" @rate="rate" />
             </div>
         </div>
     </MobileLayout>
