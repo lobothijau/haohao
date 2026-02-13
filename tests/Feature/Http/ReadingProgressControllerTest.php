@@ -9,14 +9,12 @@ it('creates reading progress for a story', function () {
     $user = User::factory()->create();
     $story = Story::factory()->create();
 
-    $response = $this->actingAs($user)->postJson(route('stories.progress', $story), [
+    $response = $this->actingAs($user)->post(route('stories.progress', $story), [
         'last_sentence_position' => 3,
         'status' => 'in_progress',
     ]);
 
-    $response->assertOk();
-    $response->assertJsonPath('progress.status', 'in_progress');
-    $response->assertJsonPath('progress.last_sentence_position', 3);
+    $response->assertRedirect();
 
     $this->assertDatabaseHas('reading_progress', [
         'user_id' => $user->id,
@@ -38,12 +36,12 @@ it('updates existing reading progress', function () {
         'started_at' => now()->subMinutes(5),
     ]);
 
-    $response = $this->actingAs($user)->postJson(route('stories.progress', $story), [
+    $response = $this->actingAs($user)->post(route('stories.progress', $story), [
         'last_sentence_position' => 5,
         'status' => 'in_progress',
     ]);
 
-    $response->assertOk();
+    $response->assertRedirect();
 
     $this->assertDatabaseCount('reading_progress', 1);
     $this->assertDatabaseHas('reading_progress', [
@@ -57,7 +55,7 @@ it('sets started_at on first progress save', function () {
     $user = User::factory()->create();
     $story = Story::factory()->create();
 
-    $this->actingAs($user)->postJson(route('stories.progress', $story), [
+    $this->actingAs($user)->post(route('stories.progress', $story), [
         'last_sentence_position' => 1,
         'status' => 'in_progress',
     ]);
@@ -70,7 +68,7 @@ it('sets completed_at when status is completed', function () {
     $user = User::factory()->create();
     $story = Story::factory()->create();
 
-    $this->actingAs($user)->postJson(route('stories.progress', $story), [
+    $this->actingAs($user)->post(route('stories.progress', $story), [
         'last_sentence_position' => 10,
         'status' => 'completed',
     ]);
@@ -95,21 +93,19 @@ it('validates required fields', function () {
     $user = User::factory()->create();
     $story = Story::factory()->create();
 
-    $response = $this->actingAs($user)->postJson(route('stories.progress', $story), []);
+    $response = $this->actingAs($user)->post(route('stories.progress', $story), []);
 
-    $response->assertUnprocessable();
-    $response->assertJsonValidationErrors(['last_sentence_position', 'status']);
+    $response->assertSessionHasErrors(['last_sentence_position', 'status']);
 });
 
 it('validates status is a valid enum value', function () {
     $user = User::factory()->create();
     $story = Story::factory()->create();
 
-    $response = $this->actingAs($user)->postJson(route('stories.progress', $story), [
+    $response = $this->actingAs($user)->post(route('stories.progress', $story), [
         'last_sentence_position' => 1,
         'status' => 'invalid_status',
     ]);
 
-    $response->assertUnprocessable();
-    $response->assertJsonValidationErrors(['status']);
+    $response->assertSessionHasErrors(['status']);
 });

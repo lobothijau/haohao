@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Enums\ReadingStatus;
 use App\Models\Story;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class ReadingProgressController extends Controller
 {
-    public function store(Request $request, Story $story): JsonResponse
+    public function store(Request $request, Story $story): RedirectResponse
     {
         $validated = $request->validate([
             'last_sentence_position' => ['required', 'integer', 'min:0'],
@@ -20,7 +20,7 @@ class ReadingProgressController extends Controller
         $now = now();
         $status = ReadingStatus::from($validated['status']);
 
-        $progress = $request->user()->readingProgress()->updateOrCreate(
+        $request->user()->readingProgress()->updateOrCreate(
             ['story_id' => $story->id],
             [
                 'last_sentence_position' => $validated['last_sentence_position'],
@@ -32,6 +32,6 @@ class ReadingProgressController extends Controller
             ],
         );
 
-        return response()->json(['progress' => $progress]);
+        return back();
     }
 }

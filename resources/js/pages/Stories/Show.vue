@@ -26,14 +26,14 @@ const props = defineProps<{
 const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
 
-const showPinyin = ref(props.preferences?.show_pinyin ?? true);
-const showTranslation = ref(props.preferences?.show_translation ?? false);
+const showPinyin = ref(JSON.parse(localStorage.getItem('pref:show_pinyin') ?? 'true'));
+const showTranslation = ref(JSON.parse(localStorage.getItem('pref:show_translation') ?? 'false'));
 const selectedWordId = ref<number | null>(null);
 const savedIds = ref<Set<number>>(new Set(props.savedVocabularyIds));
 const isCompleted = ref(props.progress?.status === 'completed');
 
 const fontSizeSteps = [16, 18, 20, 24, 28, 32];
-const fontSizeIndex = ref(2); // default 20px (text-xl)
+const fontSizeIndex = ref(Number(localStorage.getItem('pref:font_size_index') ?? 2));
 const fontSize = computed(() => `${fontSizeSteps[fontSizeIndex.value]}px`);
 
 function increaseFontSize(): void {
@@ -48,31 +48,13 @@ function decreaseFontSize(): void {
     }
 }
 
-let preferenceTimer: ReturnType<typeof setTimeout>;
-
 function savePreferences(): void {
-    if (!isAuthenticated.value) {
-        return;
-    }
-    clearTimeout(preferenceTimer);
-    preferenceTimer = setTimeout(() => {
-        fetch('/preferences', {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-XSRF-TOKEN': decodeURIComponent(
-                    document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
-                ),
-            },
-            body: JSON.stringify({
-                show_pinyin: showPinyin.value,
-                show_translation: showTranslation.value,
-            }),
-        });
-    }, 500);
+    localStorage.setItem('pref:show_pinyin', JSON.stringify(showPinyin.value));
+    localStorage.setItem('pref:show_translation', JSON.stringify(showTranslation.value));
+    localStorage.setItem('pref:font_size_index', String(fontSizeIndex.value));
 }
 
-watch([showPinyin, showTranslation], savePreferences);
+watch([showPinyin, showTranslation, fontSizeIndex], savePreferences);
 
 function splitPunctuation(text: string): { before: string; word: string; after: string } {
     const match = text.match(/^([\p{P}\p{S}]*)(.*?)([\p{P}\p{S}]*)$/u);
@@ -184,10 +166,10 @@ function markComplete(): void {
             />
 
             <!-- Full Story Text -->
-            <div class="space-y-3 px-4 py-4">
-                <div v-for="sentence in sentences" :key="sentence.id" :class="showPinyin ? 'leading-[2.5]' : 'leading-relaxed'">
+            <div class="space-y-1 px-4 py-4">
+                <div v-for="sentence in sentences" :key="sentence.id">
                     <!-- Chinese text with ruby pinyin -->
-                    <div :style="{ fontSize }">
+                    <div :class="showPinyin ? 'leading-[1.75] -mb-[0.2em]' : 'leading-normal'" :style="{ fontSize }">
                         <template v-for="word in sentence.words" :key="word.id">
                             <span v-if="splitPunctuation(word.surface_form).before">{{ splitPunctuation(word.surface_form).before }}</span>
                             <Popover
@@ -197,15 +179,22 @@ function markComplete(): void {
                             >
                                 <PopoverTrigger as-child>
                                     <ruby
+                                        v-if="showPinyin && showPinyinBasedOnLevel(word)"
                                         class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 text-center transition-colors cursor-pointer"
                                         :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
                                     >
                                         {{ splitPunctuation(word.surface_form).word }}
-                                        <rt v-if="showPinyin && showPinyinBasedOnLevel(word)" class="font-normal text-muted-foreground dark:text-white text-center antialiased">
+                                        <rt class="font-normal text-muted-foreground dark:text-white text-center antialiased">
                                             {{ word.dictionary_entry.pinyin }}
                                         </rt>
-                                        <rt v-else />
                                     </ruby>
+                                    <span
+                                        v-else
+                                        class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
+                                        :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
+                                    >
+                                        {{ splitPunctuation(word.surface_form).word }}
+                                    </span>
                                 </PopoverTrigger>
                                 <WordTooltip
                                     :word="word"
@@ -219,17 +208,17 @@ function markComplete(): void {
                         </template>
                     </div>
                     <!-- Per-sentence translation -->
-                    <p v-if="showTranslation" class="mt-1 text-muted-foreground text-sm md:text-base lg:text-lg">
+                    <p v-if="showTranslation" class="text-muted-foreground text-sm md:text-base lg:text-lg">
                         {{ sentence.translation_id }}
                     </p>
                 </div>
             </div>
 
             <!-- Done Button -->
-            <div v-if="isAuthenticated" class="flex justify-center px-4 pb-8 pt-2">
+            <div v-if="isAuthenticated" class="flex justify-center px-4 pt-2 pb-8">
                 <button
                     v-if="!isCompleted"
-                    class="inline-flex items-center gap-2 rounded-full bg-muted px-6 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-600"
+                    class="inline-flex items-center gap-2 bg-muted hover:bg-emerald-500/15 px-6 py-2.5 rounded-full font-medium text-muted-foreground hover:text-emerald-600 text-sm transition-colors"
                     @click="markComplete"
                 >
                     <CheckCircle class="size-4" />
@@ -237,7 +226,7 @@ function markComplete(): void {
                 </button>
                 <span
                     v-else
-                    class="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-6 py-2.5 text-sm font-medium text-emerald-600 dark:text-emerald-400"
+                    class="inline-flex items-center gap-2 bg-emerald-500/15 px-6 py-2.5 rounded-full font-medium text-emerald-600 dark:text-emerald-400 text-sm"
                 >
                     <CheckCircle class="size-4" />
                     Selesai
