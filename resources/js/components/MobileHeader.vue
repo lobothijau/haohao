@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { Link, usePage, router } from '@inertiajs/vue3';
-import { Menu, LogOut, Settings, X } from 'lucide-vue-next';
+import { Menu, LogOut, Settings, Sun, Moon, X } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import UserInfo from '@/components/UserInfo.vue';
+import { useAppearance } from '@/composables/useAppearance';
 import { login, logout, register } from '@/routes';
 import { edit } from '@/routes/profile';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
 const menuOpen = ref(false);
+const { resolvedAppearance, updateAppearance } = useAppearance();
+
+function toggleTheme(): void {
+    updateAppearance(resolvedAppearance.value === 'dark' ? 'light' : 'dark');
+}
 
 function toggleMenu(): void {
     menuOpen.value = !menuOpen.value;
@@ -35,9 +41,14 @@ function handleLogout(): void {
                 <!-- <span class="font-bold text-base tracking-tight">NiHao</span> -->
             </Link>
 
-            <Button variant="ghost" size="icon" class="rounded-xl" @click="toggleMenu">
-                <component :is="menuOpen ? X : Menu" class="size-5" />
-            </Button>
+            <div class="flex items-center gap-1">
+                <Button variant="ghost" size="icon" class="rounded-xl" @click="toggleTheme">
+                    <component :is="resolvedAppearance === 'dark' ? Sun : Moon" class="size-5" />
+                </Button>
+                <Button variant="ghost" size="icon" class="rounded-xl" @click="toggleMenu">
+                    <component :is="menuOpen ? X : Menu" class="size-5" />
+                </Button>
+            </div>
         </div>
 
         <!-- Mobile Menu Dropdown -->
