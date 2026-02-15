@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import UserInfo from '@/components/UserInfo.vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { login, logout, register } from '@/routes';
-import { edit } from '@/routes/profile';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
@@ -77,7 +76,7 @@ function handleLogout(): void {
                     </Link>
                     <div class="my-1 border-t" />
                     <Link
-                        :href="edit()"
+                        href="/settings"
                         class="flex items-center gap-2 hover:bg-accent px-3 py-2.5 rounded-xl text-sm"
                         @click="closeMenu"
                     >

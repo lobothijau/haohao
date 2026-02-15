@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
-import { Search } from 'lucide-vue-next';
+import { ref, watch, onMounted } from 'vue';
+import { Search, X, BookOpen, Bookmark, GraduationCap } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import StoryCard from '@/components/stories/StoryCard.vue';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,21 @@ const props = defineProps<{
         search?: string;
         sort?: string;
     };
+    isNewUser: boolean;
 }>();
+
+const showGettingStarted = ref(false);
+
+onMounted(() => {
+    if (props.isNewUser && !localStorage.getItem('nihao:getting-started-dismissed')) {
+        showGettingStarted.value = true;
+    }
+});
+
+function dismissGettingStarted(): void {
+    showGettingStarted.value = false;
+    localStorage.setItem('nihao:getting-started-dismissed', '1');
+}
 
 const search = ref(props.filters.search ?? '');
 const hskLevel = ref(props.filters.hsk_level ?? '');
@@ -68,6 +82,40 @@ watch(search, () => {
 
     <MobileLayout>
         <div class="flex flex-col gap-4 p-4">
+            <!-- Getting Started Banner -->
+            <div
+                v-if="showGettingStarted"
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 to-pink-500 p-4 text-white"
+            >
+                <button
+                    class="absolute top-3 right-3 rounded-full p-1 transition-colors hover:bg-white/20"
+                    @click="dismissGettingStarted"
+                >
+                    <X class="size-4" />
+                </button>
+                <p class="mb-3 text-sm font-bold">Mulai belajar dalam 3 langkah:</p>
+                <div class="flex flex-col gap-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/20">
+                            <BookOpen class="size-3" />
+                        </div>
+                        <span>Pilih cerita sesuai level HSK kamu</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/20">
+                            <Bookmark class="size-3" />
+                        </div>
+                        <span>Simpan kata baru ke kosakata</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/20">
+                            <GraduationCap class="size-3" />
+                        </div>
+                        <span>Latihan dengan kartu flashcard SRS</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filter Bar -->
             <div class="flex flex-col gap-3">
                 <div class="relative">

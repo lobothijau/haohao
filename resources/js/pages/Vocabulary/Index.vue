@@ -117,10 +117,16 @@ function deleteWord(id: number): void {
             </div>
 
             <!-- Empty State -->
-            <div v-else class="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <BookOpen class="size-12 mb-3 opacity-30" />
-                <p class="text-lg">Belum ada kosakata.</p>
-                <p class="text-sm">Simpan kata dari cerita untuk mulai belajar.</p>
+            <div v-else class="flex flex-col items-center justify-center py-16 text-center">
+                <BookOpen class="text-muted-foreground size-12 mb-3 opacity-30" />
+                <p class="text-lg font-bold">Belum ada kosakata</p>
+                <p class="text-muted-foreground text-sm mt-1 max-w-xs">
+                    Baca cerita dan ketuk kata yang ingin kamu pelajari untuk menyimpannya di sini.
+                </p>
+                <Link href="/" class="mt-4 inline-flex items-center gap-1.5 text-orange-500 hover:text-orange-600 text-sm font-medium">
+                    <BookOpen class="size-4" />
+                    Jelajahi cerita
+                </Link>
             </div>
 
             <!-- Pagination -->

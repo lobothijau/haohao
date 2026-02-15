@@ -35,10 +35,14 @@ class StoryController extends Controller
             ->paginate(12)
             ->withQueryString();
 
+        $user = $request->user();
+        $isNewUser = $user ? $user->readingProgress()->doesntExist() : false;
+
         return Inertia::render('Stories/Index', [
             'stories' => $stories,
             'categories' => Category::query()->orderBy('sort_order')->get(),
             'filters' => $request->only(['hsk_level', 'category', 'search', 'sort']),
+            'isNewUser' => $isNewUser,
         ]);
     }
 

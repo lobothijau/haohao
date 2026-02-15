@@ -20,6 +20,30 @@ test('authenticated users can view the review page', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Review/Index')
             ->has('dueCount')
+            ->has('totalCardCount')
+        );
+});
+
+test('review page shows correct total card count', function () {
+    $user = User::factory()->create();
+    $entry = DictionaryEntry::factory()->create();
+    $vocab = UserVocabulary::factory()->create([
+        'user_id' => $user->id,
+        'dictionary_entry_id' => $entry->id,
+    ]);
+
+    SrsCard::factory()->create([
+        'user_id' => $user->id,
+        'dictionary_entry_id' => $entry->id,
+        'user_vocabulary_id' => $vocab->id,
+        'due_at' => now()->addDay(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('review.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('totalCardCount', 1)
+            ->where('dueCount', 0)
         );
 });
 

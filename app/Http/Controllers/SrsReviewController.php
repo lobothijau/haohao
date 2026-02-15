@@ -16,12 +16,17 @@ class SrsReviewController extends Controller
 
     public function index(Request $request): Response
     {
-        $dueCount = $request->user()->srsCards()
+        $user = $request->user();
+
+        $dueCount = $user->srsCards()
             ->where('due_at', '<=', now())
             ->count();
 
+        $totalCardCount = $user->srsCards()->count();
+
         return Inertia::render('Review/Index', [
             'dueCount' => $dueCount,
+            'totalCardCount' => $totalCardCount,
         ]);
     }
 

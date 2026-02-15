@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\DictionaryEntry;
+use App\Models\ReadingProgress;
 use App\Models\SentenceWord;
 use App\Models\Story;
 use App\Models\StorySentence;
@@ -143,4 +144,32 @@ it('returns 404 for unpublished stories', function () {
     $response = $this->get(route('stories.show', $story->slug));
 
     $response->assertNotFound();
+});
+
+it('sets isNewUser to false for guests', function () {
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('isNewUser', false)
+        );
+});
+
+it('sets isNewUser to true for authenticated users with no reading progress', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('isNewUser', true)
+        );
+});
+
+it('sets isNewUser to false for authenticated users with reading progress', function () {
+    $user = User::factory()->create();
+    ReadingProgress::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('isNewUser', false)
+        );
 });

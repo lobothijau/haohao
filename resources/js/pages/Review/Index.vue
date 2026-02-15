@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { ArrowLeft, RotateCcw, Check } from 'lucide-vue-next';
+import { ArrowLeft, RotateCcw, Check, BookOpen, Sparkles } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import RatingButtons from '@/components/RatingButtons.vue';
 import type { DictionaryEntry } from '@/types';
@@ -14,6 +14,7 @@ type SrsCardItem = {
 
 const props = defineProps<{
     dueCount: number;
+    totalCardCount: number;
 }>();
 
 const cards = ref<SrsCardItem[]>([]);
@@ -124,7 +125,27 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                 <RotateCcw class="size-6 text-muted-foreground animate-spin" />
             </div>
 
-            <!-- Session Done -->
+            <!-- First-time Empty State (no cards at all) -->
+            <div v-else-if="sessionDone && totalCardCount === 0 && reviewedCount === 0" class="flex flex-col justify-center items-center py-16 text-center">
+                <div class="flex justify-center items-center bg-orange-500/15 mb-4 rounded-full size-16">
+                    <Sparkles class="size-8 text-orange-500" />
+                </div>
+                <p class="font-bold text-lg">Belum ada kartu latihan</p>
+                <p class="mt-1 text-muted-foreground text-sm max-w-xs">
+                    Simpan kata baru dari cerita ke kosakata, lalu kartu latihan SRS akan otomatis dibuat.
+                </p>
+                <div class="mt-4 flex flex-col items-center gap-2">
+                    <Link href="/" class="inline-flex items-center gap-1.5 text-orange-500 hover:text-orange-600 text-sm font-medium">
+                        <BookOpen class="size-4" />
+                        Jelajahi cerita
+                    </Link>
+                    <Link href="/vocabulary" class="text-muted-foreground hover:text-foreground text-xs">
+                        Lihat kosakata
+                    </Link>
+                </div>
+            </div>
+
+            <!-- Session Done (has cards, all reviewed) -->
             <div v-else-if="sessionDone" class="flex flex-col justify-center items-center py-16 text-center">
                 <div class="flex justify-center items-center bg-emerald-500/15 mb-4 rounded-full size-16">
                     <Check class="size-8 text-emerald-600 dark:text-emerald-400" />
