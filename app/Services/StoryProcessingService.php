@@ -129,6 +129,74 @@ class StoryProcessingService
     }
 
     /**
+     * Process a story from pre-parsed AI output (with pinyin and translations already provided).
+     *
+     * @param  list<array{text_zh: string, text_pinyin: string, translation_id: string, translation_en: string}>  $parsedSentences
+     * @return array{sentence_count: int, word_count: int, unique_word_count: int, difficulty_score: float, estimated_minutes: int}
+     */
+    public function processFromParsed(Story $story, array $parsedSentences): array
+    {
+        return DB::transaction(function () use ($story, $parsedSentences) {
+            $story->sentences()->delete();
+
+            $totalWords = 0;
+            $allDictionaryEntryIds = [];
+
+            foreach ($parsedSentences as $position => $parsed) {
+                $textZh = $parsed['text_zh'];
+                $words = $this->segmenter->segment($textZh);
+
+                $sentence = StorySentence::create([
+                    'story_id' => $story->id,
+                    'position' => $position + 1,
+                    'text_zh' => $textZh,
+                    'text_pinyin' => $parsed['text_pinyin'],
+                    'translation_id' => $parsed['translation_id'],
+                    'translation_en' => $parsed['translation_en'] ?: null,
+                ]);
+
+                foreach ($words as $wordPosition => $surfaceForm) {
+                    $dictionaryEntry = $this->findOrCreateDictionaryEntry($surfaceForm);
+                    $allDictionaryEntryIds[] = $dictionaryEntry->id;
+
+                    SentenceWord::create([
+                        'story_sentence_id' => $sentence->id,
+                        'dictionary_entry_id' => $dictionaryEntry->id,
+                        'position' => $wordPosition + 1,
+                        'surface_form' => $surfaceForm,
+                    ]);
+                }
+
+                $totalWords += count($words);
+            }
+
+            $uniqueEntryIds = array_unique($allDictionaryEntryIds);
+            $uniqueWordCount = count($uniqueEntryIds);
+            $sentenceCount = count($parsedSentences);
+            $difficultyScore = $this->calculateDifficultyScore($uniqueEntryIds);
+
+            $totalChars = mb_strlen(implode('', array_column($parsedSentences, 'text_zh')));
+            $estimatedMinutes = max(1, (int) ceil($totalChars / 150));
+
+            $story->update([
+                'word_count' => $totalWords,
+                'unique_word_count' => $uniqueWordCount,
+                'sentence_count' => $sentenceCount,
+                'difficulty_score' => $difficultyScore,
+                'estimated_minutes' => $estimatedMinutes,
+            ]);
+
+            return [
+                'sentence_count' => $sentenceCount,
+                'word_count' => $totalWords,
+                'unique_word_count' => $uniqueWordCount,
+                'difficulty_score' => $difficultyScore,
+                'estimated_minutes' => $estimatedMinutes,
+            ];
+        });
+    }
+
+    /**
      * Find a dictionary entry by simplified form, or create a stub.
      */
     private function findOrCreateDictionaryEntry(string $surfaceForm): DictionaryEntry

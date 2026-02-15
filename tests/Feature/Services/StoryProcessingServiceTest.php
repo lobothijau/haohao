@@ -165,3 +165,85 @@ it('calculates difficulty score from HSK levels', function () {
     // Average of HSK 1 and 3 = 2.0
     expect($stats['difficulty_score'])->toBe(2.0);
 });
+
+it('processes from parsed AI output with provided pinyin', function () {
+    DictionaryEntry::factory()->create(['simplified' => '你', 'pinyin' => 'nǐ']);
+    DictionaryEntry::factory()->create(['simplified' => '好', 'pinyin' => 'hǎo']);
+
+    $story = Story::factory()->create();
+    $service = app(StoryProcessingService::class);
+
+    $parsed = [
+        [
+            'text_zh' => '你好。',
+            'text_pinyin' => 'Nǐ hǎo.',
+            'translation_id' => 'Halo.',
+            'translation_en' => 'Hello.',
+        ],
+    ];
+
+    $stats = $service->processFromParsed($story, $parsed);
+
+    expect($stats['sentence_count'])->toBe(1);
+    expect($stats['word_count'])->toBe(2);
+
+    $sentence = StorySentence::where('story_id', $story->id)->first();
+    expect($sentence->text_zh)->toBe('你好。');
+    expect($sentence->text_pinyin)->toBe('Nǐ hǎo.');
+    expect($sentence->translation_id)->toBe('Halo.');
+    expect($sentence->translation_en)->toBe('Hello.');
+});
+
+it('processFromParsed creates sentence words and stats', function () {
+    DictionaryEntry::factory()->create(['simplified' => '小', 'pinyin' => 'xiǎo', 'hsk_level' => 1]);
+    DictionaryEntry::factory()->create(['simplified' => '明', 'pinyin' => 'míng', 'hsk_level' => 2]);
+
+    $story = Story::factory()->create();
+    $service = app(StoryProcessingService::class);
+
+    $parsed = [
+        [
+            'text_zh' => '小明。',
+            'text_pinyin' => 'Xiǎo Míng.',
+            'translation_id' => 'Xiao Ming.',
+            'translation_en' => 'Xiao Ming.',
+        ],
+    ];
+
+    $stats = $service->processFromParsed($story, $parsed);
+
+    expect($stats['word_count'])->toBe(2);
+    expect($stats['unique_word_count'])->toBe(2);
+
+    $story->refresh();
+    expect($story->word_count)->toBe(2);
+    expect($story->sentence_count)->toBe(1);
+});
+
+it('processFromParsed replaces existing sentences', function () {
+    $story = Story::factory()->create();
+    $service = app(StoryProcessingService::class);
+
+    // First processing via manual
+    $service->process($story, '你好。', ['Halo']);
+    expect(StorySentence::where('story_id', $story->id)->count())->toBe(1);
+
+    // Re-process via parsed
+    $parsed = [
+        [
+            'text_zh' => '你好。',
+            'text_pinyin' => 'Nǐ hǎo.',
+            'translation_id' => 'Halo.',
+            'translation_en' => 'Hello.',
+        ],
+        [
+            'text_zh' => '世界。',
+            'text_pinyin' => 'Shìjiè.',
+            'translation_id' => 'Dunia.',
+            'translation_en' => 'World.',
+        ],
+    ];
+
+    $service->processFromParsed($story, $parsed);
+    expect(StorySentence::where('story_id', $story->id)->count())->toBe(2);
+});
