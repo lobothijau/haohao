@@ -1,5 +1,12 @@
 import type { AppPageProps } from './index';
 
+declare global {
+    interface Window {
+        dataLayer: Record<string, unknown>[];
+        gtag: (...args: [string, ...unknown[]]) => void;
+    }
+}
+
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
     interface ImportMetaEnv {

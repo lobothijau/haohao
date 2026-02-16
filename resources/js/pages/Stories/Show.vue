@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Clock, BookOpen, ArrowLeft, CheckCircle } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import ReaderControls from '@/components/stories/ReaderControls.vue';
 import WordTooltip from '@/components/stories/WordTooltip.vue';
 import { progress as progressRoute } from '@/routes/stories';
+import { trackEvent } from '@/composables/useAnalytics';
 import type {
     Story,
     StorySentence,
@@ -56,6 +57,14 @@ function savePreferences(): void {
 
 watch([showPinyin, showTranslation, fontSizeIndex], savePreferences);
 
+onMounted(() => {
+    trackEvent('story_open', {
+        story_id: props.story.id,
+        story_title: props.story.title_id,
+        hsk_level: props.story.hsk_level,
+    });
+});
+
 function splitPunctuation(text: string): { before: string; word: string; after: string } {
     const match = text.match(/^([\p{P}\p{S}]*)(.*?)([\p{P}\p{S}]*)$/u);
     if (!match) {
@@ -100,6 +109,11 @@ function showPinyinBasedOnLevel(word: SentenceWord): boolean {
 function markComplete(): void {
     isCompleted.value = true;
     updateProgress(props.sentences.length, 'completed');
+    trackEvent('story_complete', {
+        story_id: props.story.id,
+        story_title: props.story.title_id,
+        hsk_level: props.story.hsk_level,
+    });
 }
 </script>
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ReadingProgressController;
 use App\Http\Controllers\SrsReviewController;
+use App\Http\Controllers\StatsController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\UserVocabularyController;
@@ -19,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/review/cards', [SrsReviewController::class, 'cards'])->name('review.cards');
     Route::post('/review/{srsCard}', [SrsReviewController::class, 'review'])->name('review.review');
     Route::patch('/preferences', [UserPreferenceController::class, 'update'])->name('preferences.update');
+    Route::get('/stats', [StatsController::class, 'index'])->name('stats.index');
 });
 
 require __DIR__.'/settings.php';

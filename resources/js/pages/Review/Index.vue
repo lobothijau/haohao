@@ -4,6 +4,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { ArrowLeft, RotateCcw, Check, BookOpen, Sparkles } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import RatingButtons from '@/components/RatingButtons.vue';
+import { trackEvent } from '@/composables/useAnalytics';
 import type { DictionaryEntry } from '@/types';
 
 type SrsCardItem = {
@@ -39,7 +40,14 @@ async function fetchCards(): Promise<void> {
         currentIndex.value = 0;
         revealed.value = false;
 
+        if (cards.value.length > 0 && reviewedCount.value === 0) {
+            trackEvent('review_start', { due_count: totalDue.value });
+        }
+
         if (cards.value.length === 0) {
+            if (reviewedCount.value > 0) {
+                trackEvent('review_complete', { reviewed_count: reviewedCount.value });
+            }
             sessionDone.value = true;
         }
     } finally {

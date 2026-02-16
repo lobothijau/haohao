@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage, router } from '@inertiajs/vue3';
-import { Menu, LogOut, Settings, Sun, Moon, X, BookOpen, GraduationCap } from 'lucide-vue-next';
+import { Menu, LogOut, Settings, Sun, Moon, X, BookOpen, GraduationCap, BarChart3 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import UserInfo from '@/components/UserInfo.vue';
@@ -73,6 +73,14 @@ function handleLogout(): void {
                     >
                         <GraduationCap class="size-4" />
                         Latihan
+                    </Link>
+                    <Link
+                        href="/stats"
+                        class="flex items-center gap-2 hover:bg-accent px-3 py-2.5 rounded-xl text-sm"
+                        @click="closeMenu"
+                    >
+                        <BarChart3 class="size-4" />
+                        Statistik
                     </Link>
                     <div class="my-1 border-t" />
                     <Link
