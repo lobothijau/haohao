@@ -22,13 +22,15 @@ defineProps<{
 </script>
 
 <template>
+
     <Head title="Statistik" />
 
     <MobileLayout>
         <div class="flex flex-col gap-6 p-4">
             <!-- Header -->
             <div class="flex items-center gap-2">
-                <Link href="/" class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm transition-colors">
+                <Link href="/"
+                    class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm transition-colors">
                     <ArrowLeft class="size-4" />
                 </Link>
                 <h1 class="font-bold text-xl">Statistik</h1>
@@ -40,7 +42,8 @@ defineProps<{
                     <CardContent class="flex flex-col items-center gap-1 px-3 py-0">
                         <div class="flex justify-center items-center rounded-full size-10"
                             :class="streakCount > 0 ? 'bg-orange-500/15' : 'bg-muted'">
-                            <Flame class="size-5" :class="streakCount > 0 ? 'text-orange-500' : 'text-muted-foreground'" />
+                            <Flame class="size-5"
+                                :class="streakCount > 0 ? 'text-orange-500' : 'text-muted-foreground'" />
                         </div>
                         <span class="font-bold text-2xl">{{ streakCount }}</span>
                         <span class="text-muted-foreground text-xs text-center">Hari Beruntun</span>
@@ -79,8 +82,8 @@ defineProps<{
                     <Deferred :data="['reviewAccuracy']">
                         <template #fallback>
                             <div class="flex gap-4">
-                                <Skeleton class="h-16 w-full rounded-xl" />
-                                <Skeleton class="h-16 w-full rounded-xl" />
+                                <Skeleton class="rounded-xl w-full h-16" />
+                                <Skeleton class="rounded-xl w-full h-16" />
                             </div>
                         </template>
 
@@ -102,7 +105,7 @@ defineProps<{
             </Card>
 
             <!-- Section 3: Activity Heatmap (deferred) -->
-            <Card>
+            <!-- <Card>
                 <CardContent class="px-4 py-0">
                     <div class="flex items-center gap-2 mb-3">
                         <Activity class="size-4 text-muted-foreground" />
@@ -111,13 +114,13 @@ defineProps<{
 
                     <Deferred :data="['weeklyActivity']">
                         <template #fallback>
-                            <Skeleton class="h-28 w-full rounded-xl" />
+                            <Skeleton class="rounded-xl w-full h-28" />
                         </template>
 
                         <ActivityHeatmap v-if="weeklyActivity" :data="weeklyActivity" />
                     </Deferred>
                 </CardContent>
-            </Card>
+            </Card> -->
 
             <!-- Section 4: HSK Progress (deferred) -->
             <Card>
@@ -130,7 +133,7 @@ defineProps<{
                     <Deferred :data="['hskProgress']">
                         <template #fallback>
                             <div class="flex flex-col gap-3">
-                                <Skeleton v-for="i in 6" :key="i" class="h-8 w-full rounded-lg" />
+                                <Skeleton v-for="i in 6" :key="i" class="rounded-lg w-full h-8" />
                             </div>
                         </template>
 
