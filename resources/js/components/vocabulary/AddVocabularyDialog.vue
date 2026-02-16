@@ -16,12 +16,61 @@ const form = ref({
 });
 const errors = ref<Record<string, string>>({});
 const submitting = ref(false);
+const fetchingPinyin = ref(false);
+const pinyinManuallyEdited = ref(false);
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getCsrfToken(): string {
     return decodeURIComponent(
         document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
     );
 }
+
+function containsChinese(text: string): boolean {
+    return /[\u4e00-\u9fff]/.test(text);
+}
+
+async function fetchPinyin(text: string): Promise<void> {
+    if (!containsChinese(text)) {
+        return;
+    }
+
+    fetchingPinyin.value = true;
+
+    try {
+        const response = await fetch(`/pinyin/convert?text=${encodeURIComponent(text)}`, {
+            headers: {
+                'X-XSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (!pinyinManuallyEdited.value) {
+                form.value.pinyin = data.pinyin;
+            }
+        }
+    } finally {
+        fetchingPinyin.value = false;
+    }
+}
+
+watch(() => form.value.simplified, (newValue) => {
+    pinyinManuallyEdited.value = false;
+
+    if (debounceTimer) {
+        clearTimeout(debounceTimer);
+    }
+
+    if (!newValue.trim()) {
+        return;
+    }
+
+    debounceTimer = setTimeout(() => {
+        fetchPinyin(newValue);
+    }, 300);
+});
 
 async function submit(): Promise<void> {
     submitting.value = true;
@@ -62,6 +111,7 @@ watch(open, (isOpen) => {
     if (!isOpen) {
         form.value = { simplified: '', pinyin: '', meaning_id: '', meaning_en: '' };
         errors.value = {};
+        pinyinManuallyEdited.value = false;
     }
 });
 </script>
@@ -98,11 +148,15 @@ watch(open, (isOpen) => {
 
                 <div>
                     <label class="text-sm font-medium mb-1.5 block">Pinyin</label>
-                    <Input
-                        v-model="form.pinyin"
-                        placeholder="例如: nǐ hǎo"
-                        class="rounded-xl"
-                    />
+                    <div class="relative">
+                        <Input
+                            v-model="form.pinyin"
+                            placeholder="例如: nǐ hǎo"
+                            class="rounded-xl"
+                            @input="pinyinManuallyEdited = true"
+                        />
+                        <Loader2 v-if="fetchingPinyin" class="absolute right-3 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" />
+                    </div>
                     <p v-if="errors.pinyin" class="text-destructive text-xs mt-1">{{ errors.pinyin }}</p>
                 </div>
 

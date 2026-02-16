@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PinyinController;
 use App\Http\Controllers\ReadingProgressController;
 use App\Http\Controllers\SrsReviewController;
 use App\Http\Controllers\StatsController;
@@ -22,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/review/{srsCard}', [SrsReviewController::class, 'review'])->name('review.review');
     Route::patch('/preferences', [UserPreferenceController::class, 'update'])->name('preferences.update');
     Route::get('/stats', [StatsController::class, 'index'])->name('stats.index');
+    Route::get('/pinyin/convert', PinyinController::class)->name('pinyin.convert');
 });
 
 require __DIR__.'/settings.php';

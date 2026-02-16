@@ -2,6 +2,13 @@
 
 namespace App\Support;
 
+/**
+ * Converts numbered pinyin notation to tone-marked pinyin (e.g. "ni3 hao3" → "nǐ hǎo").
+ *
+ * Used during one-time CC-CEDICT dictionary import.
+ *
+ * @see \App\Services\CedictParser
+ */
 class PinyinConverter
 {
     /**
