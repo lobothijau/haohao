@@ -41,7 +41,7 @@ class StoryController extends Controller
         return Inertia::render('Stories/Index', [
             'stories' => $stories,
             'categories' => Category::query()->orderBy('sort_order')->get(),
-            'filters' => $request->only(['hsk_level', 'category', 'search', 'sort']),
+            'filters' => (object) $request->only(['hsk_level', 'category', 'search', 'sort']),
             'isNewUser' => $isNewUser,
         ]);
     }
