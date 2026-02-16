@@ -131,7 +131,7 @@ watch(search, () => {
                 <div class="flex gap-2">
                     <select
                         v-model="hskLevel"
-                        class="border-input bg-background h-9 min-w-0 flex-1 rounded-xl border px-2 text-sm"
+                        class="border-input bg-background h-10 min-w-0 flex-1 rounded-xl border px-2 text-base"
                     >
                         <option value="">HSK</option>
                         <option
@@ -144,7 +144,7 @@ watch(search, () => {
                     </select>
                     <select
                         v-model="category"
-                        class="border-input bg-background h-9 min-w-0 flex-1 truncate rounded-xl border px-2 text-sm"
+                        class="border-input bg-background h-10 min-w-0 flex-1 rounded-xl border px-2 text-base"
                     >
                         <option value="">Kategori</option>
                         <option
@@ -157,7 +157,7 @@ watch(search, () => {
                     </select>
                     <select
                         v-model="sort"
-                        class="border-input bg-background h-9 min-w-0 flex-1 rounded-xl border px-2 text-sm"
+                        class="border-input bg-background h-10 min-w-0 flex-1 rounded-xl border px-2 text-base"
                     >
                         <option value="">Terbaru</option>
                         <option value="hsk_level">HSK Level</option>
