@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DictionaryEntry extends Model
@@ -29,7 +30,16 @@ class DictionaryEntry extends Model
         'audio_url',
         'notes_id',
         'hokkien_cognate',
+        'created_by_user_id',
     ];
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function createdByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
 
     /**
      * @return HasMany<DictionaryExample, $this>

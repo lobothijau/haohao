@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/stories/{story}/progress', [ReadingProgressController::class, 'store'])->name('stories.progress');
     Route::get('/vocabulary', [UserVocabularyController::class, 'index'])->name('vocabulary.index');
     Route::post('/vocabulary', [UserVocabularyController::class, 'store'])->name('vocabulary.store');
+    Route::post('/vocabulary/custom', [UserVocabularyController::class, 'storeCustom'])->name('vocabulary.store-custom');
     Route::delete('/vocabulary/{vocabulary}', [UserVocabularyController::class, 'destroy'])->name('vocabulary.destroy');
     Route::get('/review', [SrsReviewController::class, 'index'])->name('review.index');
     Route::get('/review/cards', [SrsReviewController::class, 'cards'])->name('review.cards');

@@ -4,6 +4,7 @@ import { ref, watch } from 'vue';
 import { Search, Trash2, BookOpen, ArrowLeft } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { Input } from '@/components/ui/input';
+import AddVocabularyDialog from '@/components/vocabulary/AddVocabularyDialog.vue';
 import type { UserVocabularyItem } from '@/types';
 
 type PaginatedVocabularies = {
@@ -121,7 +122,7 @@ function deleteWord(id: number): void {
                 <BookOpen class="text-muted-foreground size-12 mb-3 opacity-30" />
                 <p class="text-lg font-bold">Belum ada kosakata</p>
                 <p class="text-muted-foreground text-sm mt-1 max-w-xs">
-                    Baca cerita dan ketuk kata yang ingin kamu pelajari untuk menyimpannya di sini.
+                    Baca cerita dan ketuk kata, atau gunakan tombol + untuk menambah kosakata.
                 </p>
                 <Link href="/" class="mt-4 inline-flex items-center gap-1.5 text-orange-500 hover:text-orange-600 text-sm font-medium">
                     <BookOpen class="size-4" />
@@ -150,5 +151,7 @@ function deleteWord(id: number): void {
                 </template>
             </nav>
         </div>
+
+        <AddVocabularyDialog />
     </MobileLayout>
 </template>
