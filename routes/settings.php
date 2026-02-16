@@ -30,4 +30,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/two-factor', [TwoFactorAuthenticationController::class, 'show'])
         ->name('two-factor.show');
+
+    Route::get('settings/delete-account', function () {
+        return Inertia::render('settings/DeleteAccount');
+    })->name('delete-account.show');
 });
