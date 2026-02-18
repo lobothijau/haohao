@@ -51,7 +51,7 @@ class UserVocabularyController extends Controller
             ],
         );
 
-        $srsService->createCardForVocabulary($vocabulary);
+        $srsService->createCardsForVocabulary($vocabulary);
 
         return back();
     }
@@ -77,7 +77,7 @@ class UserVocabularyController extends Controller
             ['dictionary_entry_id' => $entry->id],
         );
 
-        $srsService->createCardForVocabulary($vocabulary);
+        $srsService->createCardsForVocabulary($vocabulary);
 
         return back();
     }

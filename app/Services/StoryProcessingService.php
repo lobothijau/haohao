@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\GenerateStoryAudioJob;
 use App\Models\DictionaryEntry;
 use App\Models\SentenceWord;
 use App\Models\Story;
@@ -51,7 +52,7 @@ class StoryProcessingService
             );
         }
 
-        return DB::transaction(function () use ($story, $sentences, $translationsId, $translationsEn) {
+        $result = DB::transaction(function () use ($story, $sentences, $translationsId, $translationsEn) {
             // Delete existing sentences (supports re-processing)
             $story->sentences()->delete();
 
@@ -126,6 +127,10 @@ class StoryProcessingService
                 'estimated_minutes' => $estimatedMinutes,
             ];
         });
+
+        GenerateStoryAudioJob::dispatch($story);
+
+        return $result;
     }
 
     /**

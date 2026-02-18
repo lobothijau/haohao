@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted } from 'vue';
-import { Clock, BookOpen, ArrowLeft, CheckCircle } from 'lucide-vue-next';
+import { Clock, BookOpen, ArrowLeft, CheckCircle, Volume2 } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import ReaderControls from '@/components/stories/ReaderControls.vue';
 import WordTooltip from '@/components/stories/WordTooltip.vue';
 import { progress as progressRoute } from '@/routes/stories';
 import { trackEvent } from '@/composables/useAnalytics';
+import { useAudioPlayer } from '@/composables/useAudioPlayer';
 import type {
     Story,
     StorySentence,
@@ -26,6 +27,9 @@ const props = defineProps<{
 
 const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
+
+const hasAudio = computed(() => props.sentences.some(s => s.audio_url));
+const { isPlaying, currentSentenceId, playbackSpeed, toggle: togglePlayback, setSpeed } = useAudioPlayer(props.sentences);
 
 const showPinyin = ref(JSON.parse(localStorage.getItem('pref:show_pinyin') ?? 'true'));
 const showTranslation = ref(JSON.parse(localStorage.getItem('pref:show_translation') ?? 'false'));
@@ -106,6 +110,10 @@ function showPinyinBasedOnLevel(word: SentenceWord): boolean {
     return wordLevel >= props.story.hsk_level;
 }
 
+function playSentenceAudio(audioUrl: string): void {
+    new Audio(audioUrl).play();
+}
+
 function markComplete(): void {
     isCompleted.value = true;
     updateProgress(props.sentences.length, 'completed');
@@ -173,17 +181,28 @@ function markComplete(): void {
             <ReaderControls
                 :show-pinyin="showPinyin"
                 :show-translation="showTranslation"
+                :is-playing="isPlaying"
+                :playback-speed="playbackSpeed"
+                :has-audio="hasAudio"
                 @toggle-pinyin="showPinyin = !showPinyin"
                 @toggle-translation="showTranslation = !showTranslation"
+                @toggle-playback="togglePlayback"
+                @set-speed="setSpeed"
                 @increase-font="increaseFontSize"
                 @decrease-font="decreaseFontSize"
             />
 
             <!-- Full Story Text -->
             <div class="space-y-1 px-4 py-4">
-                <div v-for="sentence in sentences" :key="sentence.id">
+                <div
+                    v-for="sentence in sentences"
+                    :key="sentence.id"
+                    class="transition-colors rounded-lg -mx-2 px-2 py-0.5"
+                    :class="{ 'bg-orange-500/10': currentSentenceId === sentence.id }"
+                >
                     <!-- Chinese text with ruby pinyin -->
-                    <div :class="showPinyin ? 'leading-[1.75] -mb-[0.2em]' : 'leading-normal'" :style="{ fontSize }">
+                    <div class="flex items-start gap-1" :class="showPinyin ? 'leading-[1.75] -mb-[0.2em]' : 'leading-normal'">
+                    <div class="flex-1" :style="{ fontSize }">
                         <template v-for="word in sentence.words" :key="word.id">
                             <span v-if="splitPunctuation(word.surface_form).before">{{ splitPunctuation(word.surface_form).before }}</span>
                             <Popover
@@ -220,6 +239,14 @@ function markComplete(): void {
                             </Popover>
                             <span v-if="splitPunctuation(word.surface_form).after">{{ splitPunctuation(word.surface_form).after }}</span>
                         </template>
+                    </div>
+                    <button
+                        v-if="sentence.audio_url"
+                        class="mt-1 flex-shrink-0 inline-flex items-center justify-center rounded-full size-7 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        @click="playSentenceAudio(sentence.audio_url!)"
+                    >
+                        <Volume2 class="size-3.5" />
+                    </button>
                     </div>
                     <!-- Per-sentence translation -->
                     <p v-if="showTranslation" class="text-muted-foreground text-sm md:text-base lg:text-lg">

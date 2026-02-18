@@ -32,6 +32,7 @@ export type StorySentence = {
     text_pinyin: string;
     translation_id: string;
     translation_en: string | null;
+    audio_url: string | null;
     words: SentenceWord[];
 };
 

@@ -39,4 +39,11 @@ return [
         'measurement_id' => env('GA_MEASUREMENT_ID'),
     ],
 
+    'google_tts' => [
+        'credentials_path' => env('GOOGLE_TTS_CREDENTIALS_PATH'),
+        'voice_name' => env('GOOGLE_TTS_VOICE', 'cmn-CN-Neural2-A'),
+        'language_code' => env('GOOGLE_TTS_LANGUAGE_CODE', 'cmn-CN'),
+        'speaking_rate' => (float) env('GOOGLE_TTS_SPEAKING_RATE', 1.0),
+    ],
+
 ];
