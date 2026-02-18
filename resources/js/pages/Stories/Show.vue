@@ -4,12 +4,14 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { Clock, BookOpen, ArrowLeft, CheckCircle, Volume2 } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import CommentSection from '@/components/stories/CommentSection.vue';
 import ReaderControls from '@/components/stories/ReaderControls.vue';
 import WordTooltip from '@/components/stories/WordTooltip.vue';
 import { progress as progressRoute } from '@/routes/stories';
 import { trackEvent } from '@/composables/useAnalytics';
 import { useAudioPlayer } from '@/composables/useAudioPlayer';
 import type {
+    Comment,
     Story,
     StorySentence,
     SentenceWord,
@@ -23,6 +25,8 @@ const props = defineProps<{
     progress: ReadingProgress | null;
     savedVocabularyIds: number[];
     preferences: UserPreferences | null;
+    comments: Comment[];
+    isAdmin: boolean;
 }>();
 
 const page = usePage();
@@ -197,7 +201,7 @@ function markComplete(): void {
                 <div
                     v-for="sentence in sentences"
                     :key="sentence.id"
-                    class="transition-colors rounded-lg -mx-2 px-2 py-0.5"
+                    class="-mx-2 px-2 py-0.5 rounded-lg transition-colors"
                     :class="{ 'bg-orange-500/10': currentSentenceId === sentence.id }"
                 >
                     <!-- Chinese text with ruby pinyin -->
@@ -242,7 +246,7 @@ function markComplete(): void {
                     </div>
                     <button
                         v-if="sentence.audio_url"
-                        class="mt-1 flex-shrink-0 inline-flex items-center justify-center rounded-full size-7 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        class="inline-flex flex-shrink-0 justify-center items-center hover:bg-muted mt-1 rounded-full size-7 text-muted-foreground hover:text-foreground transition-colors"
                         @click="playSentenceAudio(sentence.audio_url!)"
                     >
                         <Volume2 class="size-3.5" />
@@ -273,6 +277,14 @@ function markComplete(): void {
                     Selesai
                 </span>
             </div>
+
+            <!-- Comments -->
+            <CommentSection
+                :comments="comments"
+                :story-id="story.id"
+                :is-admin="isAdmin"
+            />
+
         </div>
     </MobileLayout>
 </template>

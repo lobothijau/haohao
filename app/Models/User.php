@@ -127,4 +127,12 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(Story::class, 'created_by');
     }
+
+    /**
+     * @return HasMany<Comment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
 }

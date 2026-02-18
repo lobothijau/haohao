@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ContentSource;
+use App\Models\Concerns\HasComments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Spatie\Sluggable\SlugOptions;
 class Story extends Model
 {
     /** @use HasFactory<\Database\Factories\StoryFactory> */
-    use HasFactory, HasSlug;
+    use HasComments, HasFactory, HasSlug;
 
     /**
      * The attributes that are mass assignable.

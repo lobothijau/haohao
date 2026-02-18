@@ -4,6 +4,7 @@ use App\Http\Controllers\PinyinController;
 use App\Http\Controllers\ReadingProgressController;
 use App\Http\Controllers\SrsReviewController;
 use App\Http\Controllers\StatsController;
+use App\Http\Controllers\StoryCommentController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\UserVocabularyController;
@@ -14,6 +15,9 @@ Route::get('/stories/{story:slug}', [StoryController::class, 'show'])->name('sto
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/stories/{story}/progress', [ReadingProgressController::class, 'store'])->name('stories.progress');
+    Route::post('/stories/{story}/comments', [StoryCommentController::class, 'store'])->name('stories.comments.store');
+    Route::put('/stories/{story}/comments/{comment}', [StoryCommentController::class, 'update'])->name('stories.comments.update');
+    Route::delete('/stories/{story}/comments/{comment}', [StoryCommentController::class, 'destroy'])->name('stories.comments.destroy');
     Route::get('/vocabulary', [UserVocabularyController::class, 'index'])->name('vocabulary.index');
     Route::post('/vocabulary', [UserVocabularyController::class, 'store'])->name('vocabulary.store');
     Route::post('/vocabulary/custom', [UserVocabularyController::class, 'storeCustom'])->name('vocabulary.store-custom');

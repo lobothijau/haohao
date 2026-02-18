@@ -83,3 +83,16 @@ export type UserPreferences = {
     show_pinyin: boolean;
     show_translation: boolean;
 };
+
+export type Comment = {
+    id: number;
+    parent_id: number | null;
+    body: string;
+    created_at: string;
+    user: {
+        id: number;
+        name: string;
+        avatar_url: string | null;
+    };
+    replies: Comment[];
+};

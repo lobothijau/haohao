@@ -78,6 +78,17 @@ class StoryController extends Controller
             $preferences = $user->preference;
         }
 
+        $comments = $story->comments()
+            ->whereNull('parent_id')
+            ->with([
+                'user:id,name,avatar_url',
+                'replies' => fn ($query) => $query->oldest(),
+                'replies.user:id,name,avatar_url',
+            ])
+            ->latest()
+            ->limit(50)
+            ->get();
+
         return Inertia::render('Stories/Show', [
             'story' => $story,
             'sentences' => $story->sentences,
@@ -87,6 +98,8 @@ class StoryController extends Controller
                 'show_pinyin' => $preferences->show_pinyin,
                 'show_translation' => $preferences->show_translation,
             ] : null,
+            'comments' => $comments,
+            'isAdmin' => $user?->hasRole('admin') ?? false,
         ]);
     }
 }
