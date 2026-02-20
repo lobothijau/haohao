@@ -19,6 +19,7 @@ it('displays the stories index page to guests', function () {
         ->has('stories.data', 3)
         ->has('categories')
         ->has('filters')
+        ->has('featuredSeries')
     );
 });
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Series;
 use App\Models\Story;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -38,11 +39,19 @@ class StoryController extends Controller
         $user = $request->user();
         $isNewUser = $user ? $user->readingProgress()->doesntExist() : false;
 
+        $featuredSeries = Series::query()
+            ->where('is_published', true)
+            ->withCount(['stories' => fn ($q) => $q->where('is_published', true)])
+            ->latest()
+            ->limit(6)
+            ->get();
+
         return Inertia::render('Stories/Index', [
             'stories' => $stories,
             'categories' => Category::query()->orderBy('sort_order')->get(),
             'filters' => (object) $request->only(['hsk_level', 'category', 'search', 'sort']),
             'isNewUser' => $isNewUser,
+            'featuredSeries' => $featuredSeries,
         ]);
     }
 
@@ -89,6 +98,19 @@ class StoryController extends Controller
             ->limit(50)
             ->get();
 
+        $seriesContext = null;
+        if ($story->series_id) {
+            $story->load('series');
+            $seriesContext = [
+                'series' => $story->series->only(['id', 'title_zh', 'title_id', 'slug']),
+                'chapters' => $story->series->stories()
+                    ->where('is_published', true)
+                    ->select(['id', 'title_zh', 'title_id', 'slug', 'series_order'])
+                    ->get(),
+                'current_order' => $story->series_order,
+            ];
+        }
+
         return Inertia::render('Stories/Show', [
             'story' => $story,
             'sentences' => $story->sentences,
@@ -100,6 +122,7 @@ class StoryController extends Controller
             ] : null,
             'comments' => $comments,
             'isAdmin' => $user?->hasRole('admin') ?? false,
+            'seriesContext' => $seriesContext,
         ]);
     }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage, router } from '@inertiajs/vue3';
-import { Menu, LogOut, Settings, Sun, Moon, X, BookOpen, GraduationCap, BarChart3 } from 'lucide-vue-next';
+import { Menu, LogOut, Settings, Sun, Moon, X, BookOpen, GraduationCap, BarChart3, Layers } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import UserInfo from '@/components/UserInfo.vue';
@@ -65,6 +65,14 @@ function handleLogout(): void {
                     >
                         <BookOpen class="size-4" />
                         Kosakata
+                    </Link>
+                    <Link
+                        href="/series"
+                        class="flex items-center gap-2 hover:bg-accent px-3 py-2.5 rounded-xl text-sm"
+                        @click="closeMenu"
+                    >
+                        <Layers class="size-4" />
+                        Seri
                     </Link>
                     <Link
                         href="/review"

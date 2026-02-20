@@ -2,20 +2,19 @@
 
 namespace App\Models;
 
-use App\Enums\ContentSource;
-use App\Models\Concerns\HasComments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Story extends Model
+class Series extends Model
 {
-    /** @use HasFactory<\Database\Factories\StoryFactory> */
-    use HasComments, HasFactory, HasSlug;
+    /** @use HasFactory<\Database\Factories\SeriesFactory> */
+    use HasFactory, HasSlug;
+
+    protected $table = 'series';
 
     /**
      * The attributes that are mass assignable.
@@ -28,20 +27,11 @@ class Story extends Model
         'title_id',
         'slug',
         'description_id',
+        'cover_image_url',
         'hsk_level',
-        'difficulty_score',
-        'word_count',
-        'unique_word_count',
-        'sentence_count',
-        'estimated_minutes',
-        'thumbnail_url',
-        'is_premium',
         'is_published',
         'published_at',
-        'content_source',
         'created_by',
-        'series_id',
-        'series_order',
     ];
 
     /**
@@ -63,28 +53,17 @@ class Story extends Model
     {
         return [
             'hsk_level' => 'integer',
-            'difficulty_score' => 'decimal:2',
-            'is_premium' => 'boolean',
             'is_published' => 'boolean',
             'published_at' => 'datetime',
-            'content_source' => ContentSource::class,
         ];
     }
 
     /**
-     * @return HasMany<StorySentence, $this>
+     * @return HasMany<Story, $this>
      */
-    public function sentences(): HasMany
+    public function stories(): HasMany
     {
-        return $this->hasMany(StorySentence::class)->orderBy('position');
-    }
-
-    /**
-     * @return BelongsToMany<Category, $this>
-     */
-    public function categories(): BelongsToMany
-    {
-        return $this->belongsToMany(Category::class);
+        return $this->hasMany(Story::class)->orderBy('series_order');
     }
 
     /**
@@ -93,21 +72,5 @@ class Story extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    /**
-     * @return BelongsTo<Series, $this>
-     */
-    public function series(): BelongsTo
-    {
-        return $this->belongsTo(Series::class);
-    }
-
-    /**
-     * @return HasMany<ReadingProgress, $this>
-     */
-    public function readingProgress(): HasMany
-    {
-        return $this->hasMany(ReadingProgress::class);
     }
 }

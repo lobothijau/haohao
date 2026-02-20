@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             DictionaryEntrySeeder::class,
             StorySeeder::class,
+            SeriesSeeder::class,
         ]);
 
         // Create admin user

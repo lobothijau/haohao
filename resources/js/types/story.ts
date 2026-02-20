@@ -15,6 +15,33 @@ export type Story = {
     is_published: boolean;
     content_source: string;
     categories: Category[];
+    series_id?: number | null;
+    series_order?: number | null;
+};
+
+export type Series = {
+    id: number;
+    title_zh: string;
+    title_pinyin: string;
+    title_id: string;
+    slug: string;
+    description_id: string | null;
+    cover_image_url: string | null;
+    hsk_level: number;
+    is_published: boolean;
+    stories_count?: number;
+};
+
+export type SeriesContext = {
+    series: Pick<Series, 'id' | 'title_zh' | 'title_id' | 'slug'>;
+    chapters: Array<{
+        id: number;
+        title_zh: string;
+        title_id: string;
+        slug: string;
+        series_order: number;
+    }>;
+    current_order: number;
 };
 
 export type Category = {

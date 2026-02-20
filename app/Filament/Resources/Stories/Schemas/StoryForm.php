@@ -55,6 +55,19 @@ class StoryForm
                             ->multiple()
                             ->preload(),
                     ]),
+                Section::make('Series')
+                    ->schema([
+                        Select::make('series_id')
+                            ->relationship('series', 'title_id')
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
+                        TextInput::make('series_order')
+                            ->label('Chapter Order')
+                            ->numeric()
+                            ->minValue(1)
+                            ->nullable(),
+                    ]),
                 Section::make('Publishing')
                     ->schema([
                         Toggle::make('is_premium')

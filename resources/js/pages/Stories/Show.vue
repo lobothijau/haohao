@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted } from 'vue';
-import { Clock, BookOpen, ArrowLeft, CheckCircle, Volume2 } from 'lucide-vue-next';
+import { Clock, BookOpen, ArrowLeft, CheckCircle, Volume2, ChevronLeft, ChevronRight, Layers } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import CommentSection from '@/components/stories/CommentSection.vue';
 import ReaderControls from '@/components/stories/ReaderControls.vue';
 import WordTooltip from '@/components/stories/WordTooltip.vue';
-import { progress as progressRoute } from '@/routes/stories';
+import { progress as progressRoute, show as storyShow } from '@/routes/stories';
+import { show as seriesShow } from '@/routes/series';
 import { trackEvent } from '@/composables/useAnalytics';
 import { useAudioPlayer } from '@/composables/useAudioPlayer';
 import type {
@@ -17,6 +18,7 @@ import type {
     SentenceWord,
     ReadingProgress,
     UserPreferences,
+    SeriesContext,
 } from '@/types';
 
 const props = defineProps<{
@@ -27,7 +29,20 @@ const props = defineProps<{
     preferences: UserPreferences | null;
     comments: Comment[];
     isAdmin: boolean;
+    seriesContext: SeriesContext | null;
 }>();
+
+const prevChapter = computed(() => {
+    if (!props.seriesContext) return null;
+    const idx = props.seriesContext.chapters.findIndex(c => c.series_order === props.seriesContext!.current_order);
+    return idx > 0 ? props.seriesContext.chapters[idx - 1] : null;
+});
+
+const nextChapter = computed(() => {
+    if (!props.seriesContext) return null;
+    const idx = props.seriesContext.chapters.findIndex(c => c.series_order === props.seriesContext!.current_order);
+    return idx >= 0 && idx < props.seriesContext.chapters.length - 1 ? props.seriesContext.chapters[idx + 1] : null;
+});
 
 const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
@@ -179,6 +194,37 @@ function markComplete(): void {
                         {{ cat.name_id }}
                     </span>
                 </div>
+            </div>
+
+            <!-- Series Navigation -->
+            <div v-if="seriesContext" class="flex items-center justify-between gap-2 px-4 py-2.5 border-b bg-muted/30">
+                <Link
+                    v-if="prevChapter"
+                    :href="storyShow(prevChapter).url"
+                    class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ChevronLeft class="size-4" />
+                    Sebelumnya
+                </Link>
+                <span v-else />
+
+                <Link
+                    :href="seriesShow(seriesContext.series).url"
+                    class="flex items-center gap-1.5 text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors"
+                >
+                    <Layers class="size-3.5" />
+                    {{ seriesContext.series.title_id }}
+                </Link>
+
+                <Link
+                    v-if="nextChapter"
+                    :href="storyShow(nextChapter).url"
+                    class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    Selanjutnya
+                    <ChevronRight class="size-4" />
+                </Link>
+                <span v-else />
             </div>
 
             <!-- Reader Controls -->

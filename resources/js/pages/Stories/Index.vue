@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch, onMounted } from 'vue';
-import { Search, X, BookOpen, Bookmark, GraduationCap } from 'lucide-vue-next';
+import { ref, watch, onMounted, computed } from 'vue';
+import { Search, X, BookOpen, Bookmark, GraduationCap, ChevronRight } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import StoryCard from '@/components/stories/StoryCard.vue';
+import SeriesCard from '@/components/series/SeriesCard.vue';
 import { Input } from '@/components/ui/input';
-import type { Story, Category } from '@/types';
+import { index as seriesIndex } from '@/routes/series';
+import type { Story, Category, Series } from '@/types';
 
 type PaginatedStories = {
     data: Story[];
@@ -24,7 +26,12 @@ const props = defineProps<{
         sort?: string;
     };
     isNewUser: boolean;
+    featuredSeries: Series[];
 }>();
+
+const showFeaturedSeries = computed(() => {
+    return props.featuredSeries.length > 0 && !props.filters.search && !props.filters.category;
+});
 
 const showGettingStarted = ref(false);
 
@@ -141,6 +148,18 @@ watch(search, () => {
                         <option value="difficulty_score">Kesulitan</option>
                     </select>
                 </div>
+            </div>
+
+            <!-- Featured Series -->
+            <div v-if="showFeaturedSeries" class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Seri Cerita</h2>
+                    <Link :href="seriesIndex().url" class="flex items-center gap-0.5 text-xs text-orange-500 hover:text-orange-600 font-medium">
+                        Lihat semua
+                        <ChevronRight class="size-3" />
+                    </Link>
+                </div>
+                <SeriesCard v-for="item in featuredSeries" :key="item.id" :series="item" />
             </div>
 
             <!-- Story Grid -->

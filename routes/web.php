@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PinyinController;
 use App\Http\Controllers\ReadingProgressController;
+use App\Http\Controllers\SeriesController;
 use App\Http\Controllers\SrsReviewController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\StoryCommentController;
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [StoryController::class, 'index'])->name('home');
 Route::get('/stories/{story:slug}', [StoryController::class, 'show'])->name('stories.show');
+
+Route::get('/series', [SeriesController::class, 'index'])->name('series.index');
+Route::get('/series/{series:slug}', [SeriesController::class, 'show'])->name('series.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/stories/{story}/progress', [ReadingProgressController::class, 'store'])->name('stories.progress');
