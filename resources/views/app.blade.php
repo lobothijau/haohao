@@ -55,4 +55,6 @@
     <body class="font-sans antialiased">
         @inertia
     </body>
+
+    <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d4e1ce3a-a946-4232-9158-221cfbd94481";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </html>
