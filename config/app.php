@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'founder_limit' => (int) env('FOUNDER_LIMIT', 100),
+
 ];

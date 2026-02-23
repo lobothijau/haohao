@@ -9,6 +9,7 @@ use App\Models\Subscription;
 use App\Services\MockPaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,6 +34,13 @@ class MembershipController extends Controller
     {
         $plan = Plan::where('slug', $request->validated('plan'))->where('is_active', true)->firstOrFail();
         $user = $request->user();
+
+        if ($plan->slug === 'founder' && ! Plan::isFounderAvailable()) {
+            $plan->update(['is_active' => false]);
+
+            return redirect()->route('membership.index')
+                ->with('error', 'Maaf, kuota Founder Edition sudah habis.');
+        }
 
         $paymentService = new MockPaymentService;
         $order = $paymentService->createOrder($user, $plan);
@@ -81,6 +89,14 @@ class MembershipController extends Controller
         ]);
 
         $request->user()->activatePremium($expiresAt);
+
+        if ($subscription->plan->slug === 'founder') {
+            Cache::forget('founder_claimed_count');
+
+            if (! Plan::isFounderAvailable()) {
+                Plan::where('slug', 'founder')->update(['is_active' => false]);
+            }
+        }
 
         return redirect()->route('membership.index')->with('success', 'Pembayaran berhasil! Selamat menikmati akses premium.');
     }

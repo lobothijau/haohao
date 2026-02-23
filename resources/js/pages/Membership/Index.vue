@@ -15,8 +15,17 @@ const founderPlan = computed(() => props.plans.find((p) => p.slug === 'founder')
 const regularPlans = computed(() => props.plans.filter((p) => p.slug !== 'founder'));
 
 const page = usePage();
-const flash = page.props.flash as { success?: string } | undefined;
+const flash = computed(() => page.props.flash as { success?: string; error?: string } | undefined);
 const user = computed(() => page.props.auth?.user ?? null);
+
+const founderCounter = computed(() => page.props.founderCounter as { claimed: number; limit: number });
+const founderRemaining = computed(() => founderCounter.value.limit - founderCounter.value.claimed);
+const founderPercentage = computed(() => Math.round((founderCounter.value.claimed / founderCounter.value.limit) * 100));
+const founderUrgencyColor = computed(() => {
+    if (founderPercentage.value >= 90) return 'red';
+    if (founderPercentage.value >= 70) return 'amber';
+    return 'green';
+});
 
 function selectPlan(planSlug: string): void {
     if (!user.value) {
@@ -66,6 +75,17 @@ function formatPrice(price: number): string {
                 </div>
             </div>
 
+            <!-- Error Flash -->
+            <div
+                v-if="flash?.error"
+                class="bg-red-50 dark:bg-red-950 p-4 border border-red-200 dark:border-red-800 rounded-xl text-red-800 dark:text-red-200 text-sm"
+            >
+                <div class="flex items-center gap-2">
+                    <span class="size-4 shrink-0 font-bold">!</span>
+                    {{ flash.error }}
+                </div>
+            </div>
+
             <!-- Active Subscription -->
             <Card v-if="activeSubscription" class="border-emerald-200 dark:border-emerald-800">
                 <CardContent class="p-4">
@@ -95,10 +115,39 @@ function formatPrice(price: number): string {
                         </div>
                         <ArrowRight class="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                     </div>
-                    <div class="mb-1">
+                    <div class="mb-3">
                         <span class="font-bold text-3xl">Rp{{ formatPrice(founderPlan.price) }}</span>
                         <span class="text-muted-foreground text-sm"> {{ formatPrice(pricePerMonth(founderPlan)!) }} / bulan</span>
                     </div>
+
+                    <!-- Founder Counter -->
+                    <div class="mb-3">
+                        <div class="bg-muted h-2 rounded-full overflow-hidden">
+                            <div
+                                class="h-full rounded-full transition-all duration-500"
+                                :class="{
+                                    'bg-gradient-to-r from-emerald-400 to-emerald-500': founderUrgencyColor === 'green',
+                                    'bg-gradient-to-r from-amber-400 to-amber-500': founderUrgencyColor === 'amber',
+                                    'bg-gradient-to-r from-red-400 to-red-500': founderUrgencyColor === 'red',
+                                }"
+                                :style="{ width: `${Math.min(founderPercentage, 100)}%` }"
+                            />
+                        </div>
+                        <div class="flex justify-between items-center mt-1.5">
+                            <span
+                                class="font-medium text-xs"
+                                :class="{
+                                    'text-emerald-600 dark:text-emerald-400': founderUrgencyColor === 'green',
+                                    'text-amber-600 dark:text-amber-400': founderUrgencyColor === 'amber',
+                                    'text-red-600 dark:text-red-400': founderUrgencyColor === 'red',
+                                }"
+                            >
+                                {{ founderRemaining }} slot tersisa
+                            </span>
+                            <span class="text-muted-foreground text-xs">{{ founderCounter.claimed }}/{{ founderCounter.limit }}</span>
+                        </div>
+                    </div>
+
                     <p class="text-muted-foreground text-sm">
                         Harga spesial untuk pendukung awal. Akses premium selama {{ founderPlan.duration_months }} bulan.
                     </p>
