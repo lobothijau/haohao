@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage, router } from '@inertiajs/vue3';
-import { Menu, LogOut, Settings, Sun, Moon, X, BookOpen, GraduationCap, BarChart3, Layers } from 'lucide-vue-next';
+import { Menu, LogOut, Settings, Sun, Moon, X, BookOpen, GraduationCap, BarChart3, Layers, Crown } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import UserInfo from '@/components/UserInfo.vue';
@@ -9,6 +9,7 @@ import { login, logout, register } from '@/routes';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
+const isPremium = computed(() => page.props.auth?.is_premium ?? false);
 const menuOpen = ref(false);
 const { resolvedAppearance, updateAppearance } = useAppearance();
 
@@ -33,12 +34,17 @@ function handleLogout(): void {
 <template>
     <header class="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur border-b">
         <div class="flex justify-between items-center mx-auto px-4 max-w-xl h-14">
-            <Link href="/" class="flex items-center gap-2.5" @click="closeMenu">
-                <div class="flex justify-center items-center bg-gradient-to-br from-orange-400 to-pink-500 shadow-sm px-2 rounded-xl">
-                    <span class="font-bold text-white text-lg">好好</span>
-                </div>
-                <!-- <span class="font-bold text-base tracking-tight">NiHao</span> -->
-            </Link>
+            <div class="flex items-center gap-3">
+                <Link href="/" class="flex items-center gap-2.5" @click="closeMenu">
+                    <div class="flex justify-center items-center bg-gradient-to-br from-orange-400 to-pink-500 shadow-sm px-2 rounded-xl">
+                        <span class="font-bold text-white text-lg">好好</span>
+                    </div>
+                </Link>
+                <Link v-if="!isPremium" href="/membership" class="flex items-center gap-1 hover:bg-accent px-2.5 py-1.5 rounded-xl text-sm font-medium transition-colors" @click="closeMenu">
+                    <Crown class="size-4 text-amber-500" />
+                    <span>Premium</span>
+                </Link>
+            </div>
 
             <div class="flex items-center gap-1">
                 <Button variant="ghost" size="icon" class="rounded-xl" @click="toggleTheme">

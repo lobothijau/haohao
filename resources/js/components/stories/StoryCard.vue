@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { Clock, Crown, BookOpen } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { Clock, Crown, Lock, BookOpen } from 'lucide-vue-next';
+import { computed } from 'vue';
 import { show } from '@/routes/stories';
 import type { Story } from '@/types';
 
 defineProps<{
     story: Story;
 }>();
+
+const page = usePage();
+const isPremiumUser = computed(() => page.props.auth?.is_premium ?? false);
 
 const hskColors: Record<number, string> = {
     1: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
@@ -34,8 +38,12 @@ const hskColors: Record<number, string> = {
                     <h3 class="truncate text-lg font-bold leading-tight">
                         {{ story.title_zh }}
                     </h3>
+                    <Lock
+                        v-if="story.is_premium && !isPremiumUser"
+                        class="size-4 shrink-0 text-muted-foreground"
+                    />
                     <Crown
-                        v-if="story.is_premium"
+                        v-else-if="story.is_premium"
                         class="size-4 shrink-0 text-amber-500"
                     />
                 </div>

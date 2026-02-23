@@ -59,9 +59,16 @@ class StoryController extends Controller
     {
         abort_unless($story->is_published, 404);
 
+        $user = auth()->user();
+
+        if ($story->is_premium && (! $user || ! $user->isPremium())) {
+            return Inertia::render('Membership/PremiumRequired', [
+                'story' => $story->only(['id', 'title_zh', 'title_id', 'slug', 'hsk_level']),
+            ]);
+        }
+
         $story->load(['sentences.words.dictionaryEntry.examples', 'categories']);
 
-        $user = auth()->user();
         $progress = null;
         $savedVocabularyIds = [];
         $preferences = null;

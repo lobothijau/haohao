@@ -15,6 +15,9 @@ use Illuminate\Support\Collection;
 
 class AnalyticsService
 {
+    /** @var array<int, SubscriptionStatus> */
+    private const array PAID_STATUSES = [SubscriptionStatus::Active, SubscriptionStatus::Expired];
+
     public function totalUsers(): int
     {
         return User::query()->count();
@@ -174,6 +177,181 @@ class AnalyticsService
             'conversion_rate' => $conversionRate,
             'monthly_revenue' => (int) $monthlyRevenue,
             'churn_30d' => $churn30d,
+        ];
+    }
+
+    /**
+     * Monthly revenue grouped by plan, measuring actual cash collected per month.
+     *
+     * @return Collection<int, array{month: string, plan: string, revenue: int}>
+     */
+    public function monthlyRevenue(int $months = 12): Collection
+    {
+        $since = Carbon::now()->subMonths($months)->startOfMonth();
+
+        $driver = Subscription::query()->getConnection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            $yearExpr = "strftime('%Y', subscriptions.starts_at)";
+            $monthExpr = "strftime('%m', subscriptions.starts_at)";
+        } else {
+            $yearExpr = 'YEAR(subscriptions.starts_at)';
+            $monthExpr = 'MONTH(subscriptions.starts_at)';
+        }
+
+        return Subscription::query()
+            ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->whereIn('subscriptions.status', self::PAID_STATUSES)
+            ->whereNotNull('subscriptions.starts_at')
+            ->where('subscriptions.starts_at', '>=', $since)
+            ->selectRaw("{$yearExpr} as year")
+            ->selectRaw("{$monthExpr} as month_num")
+            ->selectRaw('plans.label as plan_label')
+            ->selectRaw('subscriptions.plan_id')
+            ->selectRaw('SUM(subscriptions.amount) as revenue')
+            ->groupBy('year', 'month_num', 'subscriptions.plan_id', 'plans.label')
+            ->orderBy('year')
+            ->orderBy('month_num')
+            ->get()
+            ->map(fn ($row) => [
+                'month' => Carbon::createFromDate((int) $row->year, (int) $row->month_num, 1)->format('M Y'),
+                'plan' => $row->plan_label,
+                'revenue' => (int) $row->revenue,
+            ]);
+    }
+
+    /**
+     * Count distinct users with active, non-expired subscriptions.
+     */
+    public function activePaidUsers(): int
+    {
+        return Subscription::query()
+            ->where('status', SubscriptionStatus::Active)
+            ->distinct('user_id')
+            ->count('user_id');
+    }
+
+    /**
+     * Calculate repurchase rate for given day windows.
+     *
+     * @return array{expired: int, repurchased: int, rate: float}
+     */
+    public function repurchaseRate(int $days = 30): array
+    {
+        $now = Carbon::now();
+
+        $expiredSubs = Subscription::query()
+            ->where('status', SubscriptionStatus::Expired)
+            ->whereBetween('expires_at', [$now->copy()->subDays($days), $now])
+            ->get();
+
+        $expired = $expiredSubs->count();
+        $repurchased = 0;
+
+        foreach ($expiredSubs as $sub) {
+            $hasRenewal = Subscription::query()
+                ->where('user_id', $sub->user_id)
+                ->where('id', '!=', $sub->id)
+                ->where('starts_at', '>=', $sub->expires_at)
+                ->exists();
+
+            if ($hasRenewal) {
+                $repurchased++;
+            }
+        }
+
+        return [
+            'expired' => $expired,
+            'repurchased' => $repurchased,
+            'rate' => $expired > 0 ? round(($repurchased / $expired) * 100, 1) : 0.0,
+        ];
+    }
+
+    /**
+     * Segment buyers into new vs returning per month.
+     *
+     * @return Collection<int, array{month: string, new_buyers: int, returning_buyers: int}>
+     */
+    public function newVsReturningBuyers(int $months = 6): Collection
+    {
+        $results = collect();
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $monthStart = Carbon::now()->subMonths($i)->startOfMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
+
+            $subscriptions = Subscription::query()
+                ->whereIn('status', self::PAID_STATUSES)
+                ->whereBetween('starts_at', [$monthStart, $monthEnd])
+                ->get();
+
+            $newBuyers = 0;
+            $returningBuyers = 0;
+
+            foreach ($subscriptions as $sub) {
+                $hasPrior = Subscription::query()
+                    ->where('user_id', $sub->user_id)
+                    ->whereIn('status', self::PAID_STATUSES)
+                    ->where('starts_at', '<', $sub->starts_at)
+                    ->exists();
+
+                if ($hasPrior) {
+                    $returningBuyers++;
+                } else {
+                    $newBuyers++;
+                }
+            }
+
+            $results->push([
+                'month' => $monthStart->format('M Y'),
+                'new_buyers' => $newBuyers,
+                'returning_buyers' => $returningBuyers,
+            ]);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Total revenue per plan (all-time active subscriptions).
+     *
+     * @return Collection<int, array{plan: string, revenue: int, count: int}>
+     */
+    public function revenueByPlan(): Collection
+    {
+        return Subscription::query()
+            ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->whereIn('subscriptions.status', self::PAID_STATUSES)
+            ->selectRaw('plans.label as plan_label')
+            ->selectRaw('SUM(subscriptions.amount) as revenue')
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('subscriptions.plan_id', 'plans.label')
+            ->get()
+            ->map(fn ($row) => [
+                'plan' => $row->plan_label,
+                'revenue' => (int) $row->revenue,
+                'count' => (int) $row->count,
+            ]);
+    }
+
+    /**
+     * Count active subscriptions expiring in 30/60/90 day windows.
+     *
+     * @return array{next_30d: int, next_60d: int, next_90d: int}
+     */
+    public function upcomingExpirations(): array
+    {
+        $now = Carbon::now();
+
+        $countExpiring = fn (int $days) => Subscription::query()
+            ->where('status', SubscriptionStatus::Active)
+            ->whereBetween('expires_at', [$now, $now->copy()->addDays($days)])
+            ->count();
+
+        return [
+            'next_30d' => $countExpiring(30),
+            'next_60d' => $countExpiring(60),
+            'next_90d' => $countExpiring(90),
         ];
     }
 

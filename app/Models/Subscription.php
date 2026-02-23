@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\SubscriptionPlan;
 use App\Enums\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +19,7 @@ class Subscription extends Model
      */
     protected $fillable = [
         'user_id',
-        'plan',
+        'plan_id',
         'status',
         'midtrans_order_id',
         'midtrans_transaction_id',
@@ -39,8 +38,8 @@ class Subscription extends Model
     protected function casts(): array
     {
         return [
-            'plan' => SubscriptionPlan::class,
             'status' => SubscriptionStatus::class,
+            'amount' => 'integer',
             'starts_at' => 'datetime',
             'expires_at' => 'datetime',
             'cancelled_at' => 'datetime',
@@ -53,5 +52,13 @@ class Subscription extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<Plan, $this>
+     */
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
     }
 }

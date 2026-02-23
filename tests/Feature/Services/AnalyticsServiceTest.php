@@ -4,6 +4,7 @@ use App\Enums\ReadingStatus;
 use App\Enums\SrsRating;
 use App\Enums\SubscriptionStatus;
 use App\Models\DictionaryEntry;
+use App\Models\Plan;
 use App\Models\ReadingProgress;
 use App\Models\SrsCard;
 use App\Models\SrsReviewLog;
@@ -206,12 +207,16 @@ it('returns premium metrics', function () {
     User::factory()->count(10)->create();
     User::factory()->count(2)->premium()->create();
 
+    $plan = Plan::factory()->create();
+
     Subscription::factory()->count(2)->create([
+        'plan_id' => $plan->id,
         'status' => SubscriptionStatus::Active,
         'amount' => 99000,
     ]);
 
     Subscription::factory()->create([
+        'plan_id' => $plan->id,
         'status' => SubscriptionStatus::Cancelled,
         'cancelled_at' => now()->subDays(10),
     ]);
@@ -229,4 +234,212 @@ it('returns retention cohort data', function () {
 
     expect($cohorts)->toHaveCount(4);
     expect($cohorts[0])->toHaveKeys(['cohort', 'users', 'd1', 'd7', 'd30']);
+});
+
+it('returns monthly revenue grouped by plan', function () {
+    $monthly = Plan::factory()->monthly()->create();
+    $founder = Plan::factory()->founder()->create();
+
+    Subscription::factory()->create([
+        'plan_id' => $monthly->id,
+        'status' => SubscriptionStatus::Active,
+        'amount' => 49_000,
+        'starts_at' => now()->subMonth(),
+    ]);
+
+    Subscription::factory()->create([
+        'plan_id' => $founder->id,
+        'status' => SubscriptionStatus::Active,
+        'amount' => 149_000,
+        'starts_at' => now()->subMonth(),
+    ]);
+
+    Subscription::factory()->create([
+        'plan_id' => $monthly->id,
+        'status' => SubscriptionStatus::Active,
+        'amount' => 49_000,
+        'starts_at' => now(),
+    ]);
+
+    // Expired sub should still count in revenue
+    Subscription::factory()->expired()->create([
+        'plan_id' => $monthly->id,
+        'amount' => 49_000,
+        'starts_at' => now()->subMonths(2),
+    ]);
+
+    $result = $this->analytics->monthlyRevenue(12);
+
+    expect($result)->toHaveCount(4);
+    expect($result->sum('revenue'))->toBe(296_000);
+});
+
+it('counts active paid users', function () {
+    $plan = Plan::factory()->create();
+
+    // Active, non-expired
+    Subscription::factory()->create([
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Active,
+        'expires_at' => now()->addMonth(),
+    ]);
+
+    // Expired subscription
+    Subscription::factory()->expired()->create([
+        'plan_id' => $plan->id,
+    ]);
+
+    // Cancelled
+    Subscription::factory()->create([
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Cancelled,
+        'expires_at' => now()->addMonth(),
+    ]);
+
+    expect($this->analytics->activePaidUsers())->toBe(1);
+});
+
+it('calculates repurchase rate', function () {
+    $user = User::factory()->create();
+    $plan = Plan::factory()->create();
+
+    // Expired subscription (expired 10 days ago)
+    Subscription::factory()->create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Expired,
+        'starts_at' => now()->subMonths(2),
+        'expires_at' => now()->subDays(10),
+    ]);
+
+    // Renewal subscription
+    Subscription::factory()->create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Active,
+        'starts_at' => now()->subDays(10),
+        'expires_at' => now()->addMonths(1),
+    ]);
+
+    // Another user with expired sub but no renewal
+    Subscription::factory()->create([
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Expired,
+        'starts_at' => now()->subMonths(2),
+        'expires_at' => now()->subDays(5),
+    ]);
+
+    $result = $this->analytics->repurchaseRate(30);
+
+    expect($result['expired'])->toBe(2);
+    expect($result['repurchased'])->toBe(1);
+    expect($result['rate'])->toBe(50.0);
+});
+
+it('segments new vs returning buyers', function () {
+    $user = User::factory()->create();
+    $plan = Plan::factory()->create();
+
+    // First subscription for this user (2 months ago, now expired)
+    Subscription::factory()->create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Expired,
+        'starts_at' => now()->subMonths(2),
+        'expires_at' => now()->subMonth(),
+    ]);
+
+    // Returning buyer subscription (this month)
+    Subscription::factory()->create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Active,
+        'starts_at' => now(),
+        'expires_at' => now()->addMonth(),
+    ]);
+
+    // New buyer (this month)
+    Subscription::factory()->create([
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Active,
+        'starts_at' => now(),
+        'expires_at' => now()->addMonth(),
+    ]);
+
+    $result = $this->analytics->newVsReturningBuyers(1);
+
+    expect($result)->toHaveCount(1);
+    expect($result->first()['new_buyers'])->toBe(1);
+    expect($result->first()['returning_buyers'])->toBe(1);
+});
+
+it('returns revenue by plan breakdown', function () {
+    $monthly = Plan::factory()->monthly()->create();
+    $founder = Plan::factory()->founder()->create();
+
+    Subscription::factory()->count(3)->create([
+        'plan_id' => $monthly->id,
+        'status' => SubscriptionStatus::Active,
+        'amount' => 49_000,
+    ]);
+
+    Subscription::factory()->count(2)->create([
+        'plan_id' => $founder->id,
+        'status' => SubscriptionStatus::Active,
+        'amount' => 149_000,
+    ]);
+
+    // Expired sub should still count in revenue
+    Subscription::factory()->expired()->create([
+        'plan_id' => $monthly->id,
+        'amount' => 49_000,
+    ]);
+
+    $result = $this->analytics->revenueByPlan();
+
+    expect($result)->toHaveCount(2);
+
+    $monthlyResult = $result->firstWhere('plan', '1 Bulan');
+    expect($monthlyResult['revenue'])->toBe(196_000);
+    expect($monthlyResult['count'])->toBe(4);
+
+    $founderResult = $result->firstWhere('plan', 'Founder Edition');
+    expect($founderResult['revenue'])->toBe(298_000);
+    expect($founderResult['count'])->toBe(2);
+});
+
+it('counts upcoming expirations by window', function () {
+    $plan = Plan::factory()->create();
+
+    // Expires in 15 days (within 30d window)
+    Subscription::factory()->create([
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Active,
+        'expires_at' => now()->addDays(15),
+    ]);
+
+    // Expires in 45 days (within 60d window but not 30d)
+    Subscription::factory()->create([
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Active,
+        'expires_at' => now()->addDays(45),
+    ]);
+
+    // Expires in 75 days (within 90d window but not 60d)
+    Subscription::factory()->create([
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Active,
+        'expires_at' => now()->addDays(75),
+    ]);
+
+    // Already expired (should not count)
+    Subscription::factory()->expired()->create([
+        'plan_id' => $plan->id,
+    ]);
+
+    $result = $this->analytics->upcomingExpirations();
+
+    expect($result['next_30d'])->toBe(1);
+    expect($result['next_60d'])->toBe(2);
+    expect($result['next_90d'])->toBe(3);
 });
