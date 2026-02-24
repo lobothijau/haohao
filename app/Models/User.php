@@ -158,9 +158,4 @@ class User extends Authenticatable implements FilamentUser
             'premium_expires_at' => $expiresAt,
         ]);
     }
-
-    public function canAccessFilament(): bool
-    {
-        return $this->email == 'gusajisan@gmail.com';
-    }
 }
