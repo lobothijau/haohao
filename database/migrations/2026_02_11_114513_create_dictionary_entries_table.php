@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('simplified', 50);
             $table->string('traditional', 50)->nullable();
-            $table->string('pinyin', 100);
-            $table->string('pinyin_numbered', 100)->nullable();
+            $table->string('pinyin', 255);
+            $table->string('pinyin_numbered', 255)->nullable();
             $table->text('meaning_id');
             $table->text('meaning_en')->nullable();
             $table->unsignedTinyInteger('hsk_level')->nullable();
