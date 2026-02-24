@@ -27,7 +27,6 @@ return new class extends Migration
             $table->string('hokkien_cognate', 100)->nullable();
             $table->timestamps();
 
-            $table->unique(['simplified', 'pinyin']);
             $table->index('hsk_level');
             $table->index('frequency_rank');
         });
