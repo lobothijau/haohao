@@ -6,15 +6,16 @@ use App\Enums\SubscriptionStatus;
 use App\Http\Requests\SubscribeRequest;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Services\MockPaymentService;
+use App\Services\MidtransService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class MembershipController extends Controller
 {
+    public function __construct(private MidtransService $midtransService) {}
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -42,15 +43,35 @@ class MembershipController extends Controller
                 ->with('error', 'Maaf, kuota Founder Edition sudah habis.');
         }
 
-        $paymentService = new MockPaymentService;
-        $order = $paymentService->createOrder($user, $plan);
+        $existingPending = $user->subscriptions()
+            ->where('status', SubscriptionStatus::Pending)
+            ->where('plan_id', $plan->id)
+            ->whereNotNull('snap_token')
+            ->first();
+
+        if ($existingPending) {
+            return redirect()->route('membership.checkout', $existingPending);
+        }
 
         $subscription = $user->subscriptions()->create([
             'plan_id' => $plan->id,
             'status' => SubscriptionStatus::Pending,
-            'midtrans_order_id' => $order['order_id'],
-            'amount' => $order['amount'],
+            'amount' => $plan->price,
         ]);
+
+        try {
+            $result = $this->midtransService->createSnapTransaction($user, $plan, $subscription);
+
+            $subscription->update([
+                'snap_token' => $result['snap_token'],
+                'midtrans_order_id' => $result['order_id'],
+            ]);
+        } catch (\Exception $e) {
+            $subscription->delete();
+
+            return redirect()->route('membership.index')
+                ->with('error', 'Gagal memproses pembayaran. Silakan coba lagi.');
+        }
 
         return redirect()->route('membership.checkout', $subscription);
     }
@@ -64,40 +85,9 @@ class MembershipController extends Controller
 
         return Inertia::render('Membership/Checkout', [
             'subscription' => $subscription,
+            'snapToken' => $subscription->snap_token,
+            'clientKey' => $this->midtransService->clientKey(),
+            'isProduction' => $this->midtransService->isProduction(),
         ]);
-    }
-
-    public function processPayment(Request $request, Subscription $subscription): RedirectResponse
-    {
-        abort_unless($subscription->user_id === $request->user()->id, 403);
-        abort_unless($subscription->status === SubscriptionStatus::Pending, 404);
-
-        $subscription->load('plan');
-
-        $paymentService = new MockPaymentService;
-        $result = $paymentService->processPayment($subscription->midtrans_order_id);
-
-        $startsAt = now();
-        $expiresAt = $startsAt->copy()->addMonths($subscription->plan->duration_months);
-
-        $subscription->update([
-            'status' => SubscriptionStatus::Active,
-            'midtrans_transaction_id' => $result['transaction_id'],
-            'payment_method' => 'mock',
-            'starts_at' => $startsAt,
-            'expires_at' => $expiresAt,
-        ]);
-
-        $request->user()->activatePremium($expiresAt);
-
-        if ($subscription->plan->slug === 'founder') {
-            Cache::forget('founder_claimed_count');
-
-            if (! Plan::isFounderAvailable()) {
-                Plan::where('slug', 'founder')->update(['is_active' => false]);
-            }
-        }
-
-        return redirect()->route('membership.index')->with('success', 'Pembayaran berhasil! Selamat menikmati akses premium.');
     }
 }

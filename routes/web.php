@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\PinyinController;
 use App\Http\Controllers\ReadingProgressController;
 use App\Http\Controllers\SeriesController;
@@ -19,11 +20,11 @@ Route::get('/series', [SeriesController::class, 'index'])->name('series.index');
 Route::get('/series/{series:slug}', [SeriesController::class, 'show'])->name('series.show');
 
 Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
+Route::post('/webhooks/midtrans', MidtransWebhookController::class)->name('webhooks.midtrans');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/membership/subscribe', [MembershipController::class, 'subscribe'])->name('membership.subscribe');
     Route::get('/membership/checkout/{subscription}', [MembershipController::class, 'checkout'])->name('membership.checkout');
-    Route::post('/membership/checkout/{subscription}', [MembershipController::class, 'processPayment'])->name('membership.process-payment');
     Route::post('/stories/{story}/progress', [ReadingProgressController::class, 'store'])->name('stories.progress');
     Route::post('/stories/{story}/comments', [StoryCommentController::class, 'store'])->name('stories.comments.store');
     Route::put('/stories/{story}/comments/{comment}', [StoryCommentController::class, 'update'])->name('stories.comments.update');

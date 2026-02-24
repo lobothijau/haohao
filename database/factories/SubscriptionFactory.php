@@ -25,6 +25,7 @@ class SubscriptionFactory extends Factory
             'status' => SubscriptionStatus::Active,
             'midtrans_order_id' => null,
             'midtrans_transaction_id' => null,
+            'snap_token' => null,
             'payment_method' => null,
             'amount' => 49_000,
             'starts_at' => now(),

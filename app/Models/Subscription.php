@@ -23,6 +23,7 @@ class Subscription extends Model
         'status',
         'midtrans_order_id',
         'midtrans_transaction_id',
+        'snap_token',
         'payment_method',
         'amount',
         'starts_at',

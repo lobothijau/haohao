@@ -15,6 +15,7 @@ export type Subscription = {
     status: string;
     midtrans_order_id: string | null;
     midtrans_transaction_id: string | null;
+    snap_token: string | null;
     amount: number;
     starts_at: string | null;
     expires_at: string | null;
