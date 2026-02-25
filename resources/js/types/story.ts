@@ -59,7 +59,7 @@ export type StorySentence = {
     text_pinyin: string;
     translation_id: string;
     translation_en: string | null;
-    audio_url: string | null;
+    audio_src: string | null;
     words: SentenceWord[];
 };
 
@@ -79,7 +79,7 @@ export type DictionaryEntry = {
     meaning_en: string | null;
     hsk_level: number | null;
     word_type: string | null;
-    audio_url: string | null;
+    audio_src: string | null;
     examples: DictionaryExample[];
 };
 

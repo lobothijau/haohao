@@ -28,7 +28,7 @@ export function useAudioPlayer(sentences: Ref<StorySentence[]> | StorySentence[]
         const list = getSentences();
         let nextIndex = currentIndex + 1;
 
-        while (nextIndex < list.length && !list[nextIndex].audio_url) {
+        while (nextIndex < list.length && !list[nextIndex].audio_src) {
             nextIndex++;
         }
 
@@ -44,11 +44,11 @@ export function useAudioPlayer(sentences: Ref<StorySentence[]> | StorySentence[]
     function playSentence(sentence: StorySentence): void {
         cleanup();
 
-        if (!sentence.audio_url) {
+        if (!sentence.audio_src) {
             return;
         }
 
-        audio = new Audio(sentence.audio_url);
+        audio = new Audio(sentence.audio_src);
         audio.playbackRate = playbackSpeed.value;
         audio.addEventListener('ended', onEnded);
         audio.play();

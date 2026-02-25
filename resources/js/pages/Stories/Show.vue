@@ -47,7 +47,7 @@ const nextChapter = computed(() => {
 const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
 
-const hasAudio = computed(() => props.sentences.some(s => s.audio_url));
+const hasAudio = computed(() => props.sentences.some(s => s.audio_src));
 const { isPlaying, currentSentenceId, playbackSpeed, toggle: togglePlayback, setSpeed } = useAudioPlayer(props.sentences);
 
 const showPinyin = ref(JSON.parse(localStorage.getItem('pref:show_pinyin') ?? 'true'));
@@ -291,9 +291,9 @@ function markComplete(): void {
                         </template>
                     </div>
                     <button
-                        v-if="sentence.audio_url"
+                        v-if="sentence.audio_src"
                         class="inline-flex flex-shrink-0 justify-center items-center hover:bg-muted mt-1 rounded-full size-7 text-muted-foreground hover:text-foreground transition-colors"
-                        @click="playSentenceAudio(sentence.audio_url!)"
+                        @click="playSentenceAudio(sentence.audio_src!)"
                     >
                         <Volume2 class="size-3.5" />
                     </button>

@@ -34,14 +34,14 @@ const examples = computed(() => currentCard.value?.dictionary_entry.examples ?? 
 const progress = computed(() => totalDue.value > 0 ? (reviewedCount.value / totalDue.value) * 100 : 0);
 
 function playCurrentCardAudio(): void {
-    const audioUrl = currentCard.value?.dictionary_entry.audio_url;
+    const audioUrl = currentCard.value?.dictionary_entry.audio_src;
     if (audioUrl) {
         new Audio(audioUrl).play();
     }
 }
 
 watch(currentCard, (card) => {
-    if (card?.card_type === 'listening' && card.dictionary_entry.audio_url) {
+    if (card?.card_type === 'listening' && card.dictionary_entry.audio_src) {
         setTimeout(() => playCurrentCardAudio(), 200);
     }
 });

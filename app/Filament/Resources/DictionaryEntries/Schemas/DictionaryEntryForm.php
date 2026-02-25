@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DictionaryEntries\Schemas;
 
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -44,6 +45,13 @@ class DictionaryEntryForm
                     ->columnSpanFull(),
                 TextInput::make('hokkien_cognate')
                     ->maxLength(100),
+                FileUpload::make('audio_url')
+                    ->label('Audio')
+                    ->disk('public')
+                    ->directory('audio/words')
+                    ->acceptedFileTypes(['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4'])
+                    ->maxSize(5120)
+                    ->columnSpanFull(),
             ]);
     }
 }

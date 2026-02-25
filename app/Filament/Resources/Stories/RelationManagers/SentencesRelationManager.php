@@ -2,8 +2,12 @@
 
 namespace App\Filament\Resources\Stories\RelationManagers;
 
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -13,7 +17,21 @@ class SentencesRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        return $schema->components([]);
+        return $schema->components([
+            Placeholder::make('text_zh')
+                ->label('Chinese')
+                ->content(fn ($record): string => $record->text_zh),
+            Placeholder::make('text_pinyin')
+                ->label('Pinyin')
+                ->content(fn ($record): string => $record->text_pinyin),
+            FileUpload::make('audio_url')
+                ->label('Audio')
+                ->disk('public')
+                ->directory('audio/sentences')
+                ->acceptedFileTypes(['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4'])
+                ->maxSize(10240)
+                ->columnSpanFull(),
+        ]);
     }
 
     public function table(Table $table): Table
@@ -32,10 +50,17 @@ class SentencesRelationManager extends RelationManager
                 TextColumn::make('translation_id')
                     ->label('Translation (ID)')
                     ->limit(40),
+                IconColumn::make('audio_url')
+                    ->label('Audio')
+                    ->icon(fn (?string $state): string => $state ? 'heroicon-o-speaker-wave' : 'heroicon-o-minus')
+                    ->color(fn (?string $state): string => $state ? 'success' : 'gray'),
                 TextColumn::make('words_count')
                     ->counts('words')
                     ->label('Words'),
             ])
-            ->defaultSort('position');
+            ->defaultSort('position')
+            ->actions([
+                EditAction::make(),
+            ]);
     }
 }

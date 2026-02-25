@@ -53,7 +53,7 @@ function scrollTo(index: number): void {
 }
 
 function playAudio(): void {
-    const url = props.word.dictionary_entry.audio_url;
+    const url = props.word.dictionary_entry.audio_src;
     if (url) {
         new Audio(url).play();
     }
@@ -98,7 +98,7 @@ function saveWord(): void {
                     </span>
                 </p>
                 <button
-                    v-if="word.dictionary_entry.audio_url"
+                    v-if="word.dictionary_entry.audio_src"
                     class="text-muted-foreground hover:text-orange-500 transition-colors p-0.5"
                     @click="playAudio"
                 >
