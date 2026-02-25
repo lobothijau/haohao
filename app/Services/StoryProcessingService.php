@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\GenerateStoryAudioJob;
 use App\Models\DictionaryEntry;
 use App\Models\SentenceWord;
 use App\Models\Story;
@@ -127,8 +126,6 @@ class StoryProcessingService
                 'estimated_minutes' => $estimatedMinutes,
             ];
         });
-
-        GenerateStoryAudioJob::dispatch($story);
 
         return $result;
     }
