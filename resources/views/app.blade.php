@@ -39,10 +39,29 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
+        @if(config('services.ga.measurement_id'))
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.ga.measurement_id') }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '{{ config('services.ga.measurement_id') }}');
+        </script>
+        @endif
+
+        @if(config('services.midtrans.client_key'))
+        <script
+            src="{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+            data-client-key="{{ config('services.midtrans.client_key') }}"
+        ></script>
+        @endif
+
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
         @inertia
     </body>
+
+    <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d4e1ce3a-a946-4232-9158-221cfbd94481";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </html>

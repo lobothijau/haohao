@@ -24,9 +24,14 @@ class SrsService
 
     private const MINIMUM_EASE = 1.30;
 
-    public function createCardForVocabulary(UserVocabulary $vocabulary): SrsCard
+    /**
+     * @return list<SrsCard>
+     */
+    public function createCardsForVocabulary(UserVocabulary $vocabulary): array
     {
-        return SrsCard::firstOrCreate(
+        $cards = [];
+
+        $cards[] = SrsCard::firstOrCreate(
             [
                 'user_id' => $vocabulary->user_id,
                 'dictionary_entry_id' => $vocabulary->dictionary_entry_id,
@@ -43,6 +48,30 @@ class SrsService
                 'due_at' => now(),
             ],
         );
+
+        $vocabulary->loadMissing('dictionaryEntry');
+
+        if ($vocabulary->dictionaryEntry->audio_url !== null) {
+            $cards[] = SrsCard::firstOrCreate(
+                [
+                    'user_id' => $vocabulary->user_id,
+                    'dictionary_entry_id' => $vocabulary->dictionary_entry_id,
+                    'card_type' => CardType::Listening,
+                ],
+                [
+                    'user_vocabulary_id' => $vocabulary->id,
+                    'card_state' => CardState::New,
+                    'ease_factor' => 2.50,
+                    'interval_days' => 0,
+                    'repetitions' => 0,
+                    'lapses' => 0,
+                    'learning_step' => 0,
+                    'due_at' => now(),
+                ],
+            );
+        }
+
+        return $cards;
     }
 
     /**

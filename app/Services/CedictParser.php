@@ -5,6 +5,11 @@ namespace App\Services;
 use App\Support\PinyinConverter;
 use Generator;
 
+/**
+ * Parses CC-CEDICT dictionary files during one-time dictionary import.
+ *
+ * @see \App\Console\Commands\DictionaryImportCommand
+ */
 class CedictParser
 {
     /**

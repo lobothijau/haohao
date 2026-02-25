@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCustomVocabularyRequest;
+use App\Models\DictionaryEntry;
 use App\Models\UserVocabulary;
 use App\Services\SrsService;
 use Illuminate\Http\RedirectResponse;
@@ -49,7 +51,33 @@ class UserVocabularyController extends Controller
             ],
         );
 
-        $srsService->createCardForVocabulary($vocabulary);
+        $srsService->createCardsForVocabulary($vocabulary);
+
+        return back();
+    }
+
+    public function storeCustom(StoreCustomVocabularyRequest $request, SrsService $srsService): RedirectResponse
+    {
+        $validated = $request->validated();
+        $user = $request->user();
+
+        $entry = DictionaryEntry::firstOrCreate(
+            [
+                'simplified' => $validated['simplified'],
+                'pinyin' => $validated['pinyin'],
+            ],
+            [
+                'meaning_id' => $validated['meaning_id'],
+                'meaning_en' => $validated['meaning_en'] ?? null,
+                'created_by_user_id' => $user->id,
+            ],
+        );
+
+        $vocabulary = $user->vocabularies()->firstOrCreate(
+            ['dictionary_entry_id' => $entry->id],
+        );
+
+        $srsService->createCardsForVocabulary($vocabulary);
 
         return back();
     }

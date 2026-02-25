@@ -1,0 +1,1 @@
+Founder edition is limited to only 100 users, so we need to have a tracker so we know when to close it and give a sense of urgency. 

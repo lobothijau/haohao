@@ -11,6 +11,7 @@ export type User = {
 
 export type Auth = {
     user: User | null;
+    is_premium: boolean;
 };
 
 export type TwoFactorConfigContent = {

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\SubscriptionStatus;
+use DateTimeInterface;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -126,5 +128,34 @@ class User extends Authenticatable implements FilamentUser
     public function createdStories(): HasMany
     {
         return $this->hasMany(Story::class, 'created_by');
+    }
+
+    /**
+     * @return HasMany<Comment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function isPremium(): bool
+    {
+        return $this->is_premium && $this->premium_expires_at?->isFuture();
+    }
+
+    public function activeSubscription(): ?Subscription
+    {
+        return $this->subscriptions()
+            ->where('status', SubscriptionStatus::Active)
+            ->latest('starts_at')
+            ->first();
+    }
+
+    public function activatePremium(DateTimeInterface $expiresAt): void
+    {
+        $this->update([
+            'is_premium' => true,
+            'premium_expires_at' => $expiresAt,
+        ]);
     }
 }

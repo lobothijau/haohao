@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Series;
 use App\Models\Story;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -35,10 +36,22 @@ class StoryController extends Controller
             ->paginate(12)
             ->withQueryString();
 
+        $user = $request->user();
+        $isNewUser = $user ? $user->readingProgress()->doesntExist() : false;
+
+        $featuredSeries = Series::query()
+            ->where('is_published', true)
+            ->withCount(['stories' => fn ($q) => $q->where('is_published', true)])
+            ->latest()
+            ->limit(6)
+            ->get();
+
         return Inertia::render('Stories/Index', [
             'stories' => $stories,
             'categories' => Category::query()->orderBy('sort_order')->get(),
-            'filters' => $request->only(['hsk_level', 'category', 'search', 'sort']),
+            'filters' => (object) $request->only(['hsk_level', 'category', 'search', 'sort']),
+            'isNewUser' => $isNewUser,
+            'featuredSeries' => $featuredSeries,
         ]);
     }
 
@@ -46,9 +59,16 @@ class StoryController extends Controller
     {
         abort_unless($story->is_published, 404);
 
+        $user = auth()->user();
+
+        if ($story->is_premium && (! $user || ! $user->isPremium())) {
+            return Inertia::render('Membership/PremiumRequired', [
+                'story' => $story->only(['id', 'title_zh', 'title_id', 'slug', 'hsk_level']),
+            ]);
+        }
+
         $story->load(['sentences.words.dictionaryEntry.examples', 'categories']);
 
-        $user = auth()->user();
         $progress = null;
         $savedVocabularyIds = [];
         $preferences = null;
@@ -74,6 +94,30 @@ class StoryController extends Controller
             $preferences = $user->preference;
         }
 
+        $comments = $story->comments()
+            ->whereNull('parent_id')
+            ->with([
+                'user:id,name,avatar_url',
+                'replies' => fn ($query) => $query->oldest(),
+                'replies.user:id,name,avatar_url',
+            ])
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        $seriesContext = null;
+        if ($story->series_id) {
+            $story->load('series');
+            $seriesContext = [
+                'series' => $story->series->only(['id', 'title_zh', 'title_id', 'slug']),
+                'chapters' => $story->series->stories()
+                    ->where('is_published', true)
+                    ->select(['id', 'title_zh', 'title_id', 'slug', 'series_order'])
+                    ->get(),
+                'current_order' => $story->series_order,
+            ];
+        }
+
         return Inertia::render('Stories/Show', [
             'story' => $story,
             'sentences' => $story->sentences,
@@ -83,6 +127,9 @@ class StoryController extends Controller
                 'show_pinyin' => $preferences->show_pinyin,
                 'show_translation' => $preferences->show_translation,
             ] : null,
+            'comments' => $comments,
+            'isAdmin' => $user?->hasRole('admin') ?? false,
+            'seriesContext' => $seriesContext,
         ]);
     }
 }

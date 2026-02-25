@@ -15,7 +15,7 @@ class DictionaryImportCommand extends Command
         {--hsk= : Path to HSK word list CSV}
         {--chunk=500 : Number of entries per upsert batch}';
 
-    protected $description = 'Import dictionary entries from a CC-CEDICT file';
+    protected $description = 'One-time setup: import dictionary entries from a CC-CEDICT file';
 
     public function handle(CedictParser $parser): int
     {

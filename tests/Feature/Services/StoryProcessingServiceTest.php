@@ -6,8 +6,12 @@ use App\Models\Story;
 use App\Models\StorySentence;
 use App\Services\ChineseSegmenter;
 use App\Services\StoryProcessingService;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
+    // Fake the queue to prevent audio generation jobs from running
+    Queue::fake();
+
     // Mock the ChineseSegmenter to avoid Python dependency in CI
     $this->mock(ChineseSegmenter::class, function ($mock) {
         $mock->shouldReceive('segment')

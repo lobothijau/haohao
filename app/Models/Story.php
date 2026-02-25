@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ContentSource;
+use App\Models\Concerns\HasComments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Spatie\Sluggable\SlugOptions;
 class Story extends Model
 {
     /** @use HasFactory<\Database\Factories\StoryFactory> */
-    use HasFactory, HasSlug;
+    use HasComments, HasFactory, HasSlug;
 
     /**
      * The attributes that are mass assignable.
@@ -39,6 +40,8 @@ class Story extends Model
         'published_at',
         'content_source',
         'created_by',
+        'series_id',
+        'series_order',
     ];
 
     /**
@@ -90,6 +93,14 @@ class Story extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * @return BelongsTo<Series, $this>
+     */
+    public function series(): BelongsTo
+    {
+        return $this->belongsTo(Series::class);
     }
 
     /**

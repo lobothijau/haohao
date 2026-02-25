@@ -13,7 +13,11 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
+        "league/flysystem-aws-s3-v3": "*",
+        "midtrans/midtrans-php": "*",
+        "overtrue/pinyin": "*",
         "spatie/laravel-permission": "*",
+        "spatie/laravel-sitemap": "*",
         "spatie/laravel-sluggable": "*"
     },
     "require-dev": {

@@ -15,6 +15,33 @@ export type Story = {
     is_published: boolean;
     content_source: string;
     categories: Category[];
+    series_id?: number | null;
+    series_order?: number | null;
+};
+
+export type Series = {
+    id: number;
+    title_zh: string;
+    title_pinyin: string;
+    title_id: string;
+    slug: string;
+    description_id: string | null;
+    cover_image_url: string | null;
+    hsk_level: number;
+    is_published: boolean;
+    stories_count?: number;
+};
+
+export type SeriesContext = {
+    series: Pick<Series, 'id' | 'title_zh' | 'title_id' | 'slug'>;
+    chapters: Array<{
+        id: number;
+        title_zh: string;
+        title_id: string;
+        slug: string;
+        series_order: number;
+    }>;
+    current_order: number;
 };
 
 export type Category = {
@@ -32,6 +59,7 @@ export type StorySentence = {
     text_pinyin: string;
     translation_id: string;
     translation_en: string | null;
+    audio_src: string | null;
     words: SentenceWord[];
 };
 
@@ -51,7 +79,7 @@ export type DictionaryEntry = {
     meaning_en: string | null;
     hsk_level: number | null;
     word_type: string | null;
-    audio_url: string | null;
+    audio_src: string | null;
     examples: DictionaryExample[];
 };
 
@@ -81,4 +109,17 @@ export type UserVocabularyItem = {
 export type UserPreferences = {
     show_pinyin: boolean;
     show_translation: boolean;
+};
+
+export type Comment = {
+    id: number;
+    parent_id: number | null;
+    body: string;
+    created_at: string;
+    user: {
+        id: number;
+        name: string;
+        avatar_url: string | null;
+    };
+    replies: Comment[];
 };

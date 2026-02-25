@@ -4,6 +4,7 @@ import { usePage, router } from '@inertiajs/vue3';
 import { BookmarkPlus, BookmarkCheck, Volume2 } from 'lucide-vue-next';
 import { PopoverContent } from '@/components/ui/popover';
 import { store as vocabularyStore } from '@/routes/vocabulary';
+import { trackEvent } from '@/composables/useAnalytics';
 import type { SentenceWord } from '@/types';
 
 const props = defineProps<{
@@ -52,7 +53,7 @@ function scrollTo(index: number): void {
 }
 
 function playAudio(): void {
-    const url = props.word.dictionary_entry.audio_url;
+    const url = props.word.dictionary_entry.audio_src;
     if (url) {
         new Audio(url).play();
     }
@@ -71,6 +72,10 @@ function saveWord(): void {
             preserveScroll: true,
             onSuccess: () => {
                 emit('saved', props.word.dictionary_entry.id);
+                trackEvent('vocabulary_save', {
+                    word: props.word.dictionary_entry.simplified,
+                    hsk_level: props.word.dictionary_entry.hsk_level,
+                });
             },
         },
     );
@@ -93,7 +98,7 @@ function saveWord(): void {
                     </span>
                 </p>
                 <button
-                    v-if="word.dictionary_entry.audio_url"
+                    v-if="word.dictionary_entry.audio_src"
                     class="text-muted-foreground hover:text-orange-500 transition-colors p-0.5"
                     @click="playAudio"
                 >

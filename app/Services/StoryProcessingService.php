@@ -51,7 +51,7 @@ class StoryProcessingService
             );
         }
 
-        return DB::transaction(function () use ($story, $sentences, $translationsId, $translationsEn) {
+        $result = DB::transaction(function () use ($story, $sentences, $translationsId, $translationsEn) {
             // Delete existing sentences (supports re-processing)
             $story->sentences()->delete();
 
@@ -126,6 +126,8 @@ class StoryProcessingService
                 'estimated_minutes' => $estimatedMinutes,
             ];
         });
+
+        return $result;
     }
 
     /**

@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
-import { Clock, BookOpen, ArrowLeft, CheckCircle } from 'lucide-vue-next';
+import { ref, computed, watch, onMounted } from 'vue';
+import { Clock, BookOpen, ArrowLeft, CheckCircle, Volume2, ChevronLeft, ChevronRight, Layers } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import CommentSection from '@/components/stories/CommentSection.vue';
 import ReaderControls from '@/components/stories/ReaderControls.vue';
 import WordTooltip from '@/components/stories/WordTooltip.vue';
-import { progress as progressRoute } from '@/routes/stories';
+import { progress as progressRoute, show as storyShow } from '@/routes/stories';
+import { show as seriesShow } from '@/routes/series';
+import { trackEvent } from '@/composables/useAnalytics';
+import { useAudioPlayer } from '@/composables/useAudioPlayer';
 import type {
+    Comment,
     Story,
     StorySentence,
     SentenceWord,
     ReadingProgress,
     UserPreferences,
+    SeriesContext,
 } from '@/types';
 
 const props = defineProps<{
@@ -21,10 +27,28 @@ const props = defineProps<{
     progress: ReadingProgress | null;
     savedVocabularyIds: number[];
     preferences: UserPreferences | null;
+    comments: Comment[];
+    isAdmin: boolean;
+    seriesContext: SeriesContext | null;
 }>();
+
+const prevChapter = computed(() => {
+    if (!props.seriesContext) return null;
+    const idx = props.seriesContext.chapters.findIndex(c => c.series_order === props.seriesContext!.current_order);
+    return idx > 0 ? props.seriesContext.chapters[idx - 1] : null;
+});
+
+const nextChapter = computed(() => {
+    if (!props.seriesContext) return null;
+    const idx = props.seriesContext.chapters.findIndex(c => c.series_order === props.seriesContext!.current_order);
+    return idx >= 0 && idx < props.seriesContext.chapters.length - 1 ? props.seriesContext.chapters[idx + 1] : null;
+});
 
 const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
+
+const hasAudio = computed(() => props.sentences.some(s => s.audio_src));
+const { isPlaying, currentSentenceId, playbackSpeed, toggle: togglePlayback, setSpeed } = useAudioPlayer(props.sentences);
 
 const showPinyin = ref(JSON.parse(localStorage.getItem('pref:show_pinyin') ?? 'true'));
 const showTranslation = ref(JSON.parse(localStorage.getItem('pref:show_translation') ?? 'false'));
@@ -55,6 +79,14 @@ function savePreferences(): void {
 }
 
 watch([showPinyin, showTranslation, fontSizeIndex], savePreferences);
+
+onMounted(() => {
+    trackEvent('story_open', {
+        story_id: props.story.id,
+        story_title: props.story.title_id,
+        hsk_level: props.story.hsk_level,
+    });
+});
 
 function splitPunctuation(text: string): { before: string; word: string; after: string } {
     const match = text.match(/^([\p{P}\p{S}]*)(.*?)([\p{P}\p{S}]*)$/u);
@@ -97,9 +129,18 @@ function showPinyinBasedOnLevel(word: SentenceWord): boolean {
     return wordLevel >= props.story.hsk_level;
 }
 
+function playSentenceAudio(audioUrl: string): void {
+    new Audio(audioUrl).play();
+}
+
 function markComplete(): void {
     isCompleted.value = true;
     updateProgress(props.sentences.length, 'completed');
+    trackEvent('story_complete', {
+        story_id: props.story.id,
+        story_title: props.story.title_id,
+        hsk_level: props.story.hsk_level,
+    });
 }
 </script>
 
@@ -155,21 +196,63 @@ function markComplete(): void {
                 </div>
             </div>
 
+            <!-- Series Navigation -->
+            <div v-if="seriesContext" class="flex items-center justify-between gap-2 px-4 py-2.5 border-b bg-muted/30">
+                <Link
+                    v-if="prevChapter"
+                    :href="storyShow(prevChapter).url"
+                    class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ChevronLeft class="size-4" />
+                    Sebelumnya
+                </Link>
+                <span v-else />
+
+                <Link
+                    :href="seriesShow(seriesContext.series).url"
+                    class="flex items-center gap-1.5 text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors"
+                >
+                    <Layers class="size-3.5" />
+                    {{ seriesContext.series.title_id }}
+                </Link>
+
+                <Link
+                    v-if="nextChapter"
+                    :href="storyShow(nextChapter).url"
+                    class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    Selanjutnya
+                    <ChevronRight class="size-4" />
+                </Link>
+                <span v-else />
+            </div>
+
             <!-- Reader Controls -->
             <ReaderControls
                 :show-pinyin="showPinyin"
                 :show-translation="showTranslation"
+                :is-playing="isPlaying"
+                :playback-speed="playbackSpeed"
+                :has-audio="hasAudio"
                 @toggle-pinyin="showPinyin = !showPinyin"
                 @toggle-translation="showTranslation = !showTranslation"
+                @toggle-playback="togglePlayback"
+                @set-speed="setSpeed"
                 @increase-font="increaseFontSize"
                 @decrease-font="decreaseFontSize"
             />
 
             <!-- Full Story Text -->
             <div class="space-y-1 px-4 py-4">
-                <div v-for="sentence in sentences" :key="sentence.id">
+                <div
+                    v-for="sentence in sentences"
+                    :key="sentence.id"
+                    class="-mx-2 px-2 py-0.5 rounded-lg transition-colors"
+                    :class="{ 'bg-orange-500/10': currentSentenceId === sentence.id }"
+                >
                     <!-- Chinese text with ruby pinyin -->
-                    <div :class="showPinyin ? 'leading-[1.75] -mb-[0.2em]' : 'leading-normal'" :style="{ fontSize }">
+                    <div class="flex items-start gap-1" :class="showPinyin ? 'leading-[1.75] -mb-[0.2em]' : 'leading-normal'">
+                    <div class="flex-1" :style="{ fontSize }">
                         <template v-for="word in sentence.words" :key="word.id">
                             <span v-if="splitPunctuation(word.surface_form).before">{{ splitPunctuation(word.surface_form).before }}</span>
                             <Popover
@@ -207,6 +290,14 @@ function markComplete(): void {
                             <span v-if="splitPunctuation(word.surface_form).after">{{ splitPunctuation(word.surface_form).after }}</span>
                         </template>
                     </div>
+                    <button
+                        v-if="sentence.audio_src"
+                        class="inline-flex flex-shrink-0 justify-center items-center hover:bg-muted mt-1 rounded-full size-7 text-muted-foreground hover:text-foreground transition-colors"
+                        @click="playSentenceAudio(sentence.audio_src!)"
+                    >
+                        <Volume2 class="size-3.5" />
+                    </button>
+                    </div>
                     <!-- Per-sentence translation -->
                     <p v-if="showTranslation" class="text-muted-foreground text-sm md:text-base lg:text-lg">
                         {{ sentence.translation_id }}
@@ -232,6 +323,14 @@ function markComplete(): void {
                     Selesai
                 </span>
             </div>
+
+            <!-- Comments -->
+            <CommentSection
+                :comments="comments"
+                :story-id="story.id"
+                :is-admin="isAdmin"
+            />
+
         </div>
     </MobileLayout>
 </template>

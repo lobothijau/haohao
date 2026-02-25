@@ -1,19 +1,22 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { ArrowLeft, RotateCcw, Check } from 'lucide-vue-next';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ArrowLeft, RotateCcw, Check, BookOpen, Sparkles, Volume2 } from 'lucide-vue-next';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import RatingButtons from '@/components/RatingButtons.vue';
+import { trackEvent } from '@/composables/useAnalytics';
 import type { DictionaryEntry } from '@/types';
 
 type SrsCardItem = {
     id: number;
     dictionary_entry: DictionaryEntry;
     card_state: string;
+    card_type: 'recognition' | 'recall' | 'listening';
 };
 
 const props = defineProps<{
     dueCount: number;
+    totalCardCount: number;
 }>();
 
 const cards = ref<SrsCardItem[]>([]);
@@ -26,8 +29,22 @@ const sessionDone = ref(false);
 const reviewStartTime = ref<number>(0);
 
 const currentCard = computed(() => cards.value[currentIndex.value] ?? null);
+const isListeningCard = computed(() => currentCard.value?.card_type === 'listening');
 const examples = computed(() => currentCard.value?.dictionary_entry.examples ?? []);
 const progress = computed(() => totalDue.value > 0 ? (reviewedCount.value / totalDue.value) * 100 : 0);
+
+function playCurrentCardAudio(): void {
+    const audioUrl = currentCard.value?.dictionary_entry.audio_src;
+    if (audioUrl) {
+        new Audio(audioUrl).play();
+    }
+}
+
+watch(currentCard, (card) => {
+    if (card?.card_type === 'listening' && card.dictionary_entry.audio_src) {
+        setTimeout(() => playCurrentCardAudio(), 200);
+    }
+});
 
 async function fetchCards(): Promise<void> {
     loading.value = true;
@@ -38,7 +55,14 @@ async function fetchCards(): Promise<void> {
         currentIndex.value = 0;
         revealed.value = false;
 
+        if (cards.value.length > 0 && reviewedCount.value === 0) {
+            trackEvent('review_start', { due_count: totalDue.value });
+        }
+
         if (cards.value.length === 0) {
+            if (reviewedCount.value > 0) {
+                trackEvent('review_complete', { reviewed_count: reviewedCount.value });
+            }
             sessionDone.value = true;
         }
     } finally {
@@ -124,7 +148,27 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                 <RotateCcw class="size-6 text-muted-foreground animate-spin" />
             </div>
 
-            <!-- Session Done -->
+            <!-- First-time Empty State (no cards at all) -->
+            <div v-else-if="sessionDone && totalCardCount === 0 && reviewedCount === 0" class="flex flex-col justify-center items-center py-16 text-center">
+                <div class="flex justify-center items-center bg-orange-500/15 mb-4 rounded-full size-16">
+                    <Sparkles class="size-8 text-orange-500" />
+                </div>
+                <p class="font-bold text-lg">Belum ada kartu latihan</p>
+                <p class="mt-1 text-muted-foreground text-sm max-w-xs">
+                    Simpan kata baru dari cerita ke kosakata, lalu kartu latihan SRS akan otomatis dibuat.
+                </p>
+                <div class="mt-4 flex flex-col items-center gap-2">
+                    <Link href="/" class="inline-flex items-center gap-1.5 text-orange-500 hover:text-orange-600 text-sm font-medium">
+                        <BookOpen class="size-4" />
+                        Jelajahi cerita
+                    </Link>
+                    <Link href="/vocabulary" class="text-muted-foreground hover:text-foreground text-xs">
+                        Lihat kosakata
+                    </Link>
+                </div>
+            </div>
+
+            <!-- Session Done (has cards, all reviewed) -->
             <div v-else-if="sessionDone" class="flex flex-col justify-center items-center py-16 text-center">
                 <div class="flex justify-center items-center bg-emerald-500/15 mb-4 rounded-full size-16">
                     <Check class="size-8 text-emerald-600 dark:text-emerald-400" />
@@ -147,13 +191,38 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                     class="flex flex-col justify-center items-center bg-card p-8 border rounded-2xl w-full min-h-[280px] cursor-pointer select-none"
                     @click="!revealed && reveal()"
                 >
-                    <!-- Front: Character -->
-                    <p class="mb-4 font-bold text-5xl">
-                        {{ currentCard.dictionary_entry.simplified }}
-                    </p>
+                    <!-- Listening Card Front -->
+                    <template v-if="isListeningCard && !revealed">
+                        <div class="flex justify-center items-center bg-emerald-500/15 mb-4 rounded-full size-20">
+                            <Volume2 class="size-10 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <button
+                            class="inline-flex items-center gap-1.5 bg-muted hover:bg-muted/80 px-4 py-2 rounded-full text-sm font-medium text-muted-foreground transition-colors"
+                            @click.stop="playCurrentCardAudio()"
+                        >
+                            <Volume2 class="size-4" />
+                            Putar ulang
+                        </button>
+                        <p class="mt-4 text-muted-foreground text-xs">
+                            Dengarkan dan coba ingat artinya
+                        </p>
+                    </template>
 
-                    <!-- Revealed: Pinyin + Meaning -->
+                    <!-- Recognition Card Front -->
+                    <template v-else-if="!revealed">
+                        <p class="mb-4 font-bold text-5xl">
+                            {{ currentCard.dictionary_entry.simplified }}
+                        </p>
+                        <p class="mt-4 text-muted-foreground text-xs">
+                            Tekan spasi, enter, klik atau sentuh untuk melihat jawaban
+                        </p>
+                    </template>
+
+                    <!-- Revealed: Pinyin + Meaning (shared by all card types) -->
                     <template v-if="revealed">
+                        <p class="mb-4 font-bold text-5xl">
+                            {{ currentCard.dictionary_entry.simplified }}
+                        </p>
                         <p class="text-muted-foreground text-lg">
                             {{ currentCard.dictionary_entry.pinyin }}
                         </p>
@@ -176,11 +245,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                             </div>
                         </div>
                     </template>
-
-                    <!-- Tap hint -->
-                    <p v-else class="mt-4 text-muted-foreground text-xs">
-                        Tekan spasi, enter, klik atau sentuh untuk melihat jawaban
-                    </p>
                 </div>
 
                 <!-- Rating buttons (only when revealed) -->
