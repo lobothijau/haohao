@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\PinyinController;
@@ -18,6 +19,9 @@ Route::get('/stories/{story:slug}', [StoryController::class, 'show'])->name('sto
 
 Route::get('/series', [SeriesController::class, 'index'])->name('series.index');
 Route::get('/series/{series:slug}', [SeriesController::class, 'show'])->name('series.show');
+
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{blogPost:slug}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
 Route::post('/webhooks/midtrans', MidtransWebhookController::class)->name('webhooks.midtrans');
