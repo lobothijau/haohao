@@ -37,10 +37,10 @@ function handleLogout(): void {
             <div class="flex items-center gap-3">
                 <Link href="/" class="flex items-center gap-2.5" @click="closeMenu">
                     <div class="flex justify-center items-center bg-gradient-to-br from-orange-400 to-pink-500 shadow-sm px-2 rounded-xl">
-                        <span class="font-bold text-white text-lg">好好</span>
+                        <span class="font-bold text-white text-lg">你好</span>
                     </div>
                 </Link>
-                <Link v-if="!isPremium" href="/membership" class="flex items-center gap-1 hover:bg-accent px-2.5 py-1.5 rounded-xl text-sm font-medium transition-colors" @click="closeMenu">
+                <Link v-if="!isPremium" href="/membership" class="flex items-center gap-1 hover:bg-accent px-2.5 py-1.5 rounded-xl font-medium text-sm transition-colors" @click="closeMenu">
                     <Crown class="size-4 text-amber-500" />
                     <span>Premium</span>
                 </Link>
