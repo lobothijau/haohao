@@ -47,8 +47,9 @@ class DictionaryEntryForm
                     ->maxLength(100),
                 FileUpload::make('audio_url')
                     ->label('Audio')
-                    ->disk('public')
+                    ->disk('do')
                     ->directory('audio/words')
+                    ->visibility('public')
                     ->acceptedFileTypes(['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4'])
                     ->maxSize(5120)
                     ->columnSpanFull(),

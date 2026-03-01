@@ -6,7 +6,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Tables\Actions\EditAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -26,8 +26,9 @@ class SentencesRelationManager extends RelationManager
                 ->content(fn ($record): string => $record->text_pinyin),
             FileUpload::make('audio_url')
                 ->label('Audio')
-                ->disk('public')
+                ->disk('do')
                 ->directory('audio/sentences')
+                ->visibility('public')
                 ->acceptedFileTypes(['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4'])
                 ->maxSize(10240)
                 ->columnSpanFull(),

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class AiStoryParser
@@ -26,6 +27,8 @@ class AiStoryParser
 - translation_id: Bahasa Indonesia translation
 - translation_en: English translation
 
+Sentences in the input are separated by empty lines (blank lines). Each block of text between blank lines is one sentence.
+
 The target learner level is HSK %d. Keep translations natural and appropriate for this level.
 Return a JSON object with a "sentences" key containing an array of sentence objects.',
             $hskLevel,
@@ -36,10 +39,27 @@ Return a JSON object with a "sentences" key containing an array of sentence obje
             $rawChinese,
         );
 
+        Log::info('AiStoryParser: starting parse', [
+            'hsk_level' => $hskLevel,
+            'text_length' => strlen($rawChinese),
+        ]);
+
         $response = $this->client->chat($system, $prompt, 0.3);
-        $data = json_decode($response, true);
+
+        Log::info('AiStoryParser: received response', [
+            'response_length' => strlen($response),
+            'response_preview' => mb_substr($response, 0, 500),
+        ]);
+
+        $json = $this->extractJson($response);
+        $data = json_decode($json, true);
 
         if (! is_array($data)) {
+            Log::error('AiStoryParser: JSON decode failed', [
+                'json_error' => json_last_error_msg(),
+                'response' => mb_substr($response, 0, 1000),
+            ]);
+
             throw new RuntimeException("Invalid AI response: expected JSON, got: {$response}");
         }
 
@@ -61,6 +81,24 @@ Return a JSON object with a "sentences" key containing an array of sentence obje
             }
         }
 
+        Log::info('AiStoryParser: parsed successfully', [
+            'sentence_count' => count($sentences),
+        ]);
+
         return $sentences;
+    }
+
+    /**
+     * Extract JSON from a response that may be wrapped in markdown code fences.
+     */
+    private function extractJson(string $response): string
+    {
+        $trimmed = trim($response);
+
+        if (preg_match('/```(?:json)?\s*\n?(.*?)\n?\s*```/s', $trimmed, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return $trimmed;
     }
 }

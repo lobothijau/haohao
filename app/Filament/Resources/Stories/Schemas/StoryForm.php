@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Stories\Schemas;
 
 use App\Enums\ContentSource;
+use App\Services\PinyinService;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
@@ -24,7 +25,13 @@ class StoryForm
                         TextInput::make('title_zh')
                             ->label('Title (Chinese)')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (?string $state, callable $set) {
+                                if ($state !== null && $state !== '') {
+                                    $set('title_pinyin', app(PinyinService::class)->convert($state));
+                                }
+                            }),
                         TextInput::make('title_pinyin')
                             ->label('Title (Pinyin)')
                             ->required()

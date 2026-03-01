@@ -42,6 +42,8 @@ class EditStory extends EditRecord
                             $rawChinese = $get('raw_chinese');
                             $hskLevel = $this->record->hsk_level ?? 3;
 
+                            set_time_limit(120);
+
                             try {
                                 $parser = app(AiStoryParser::class);
                                 $parsed = $parser->parse($rawChinese, $hskLevel);

@@ -54,7 +54,7 @@ class DictionaryEntry extends Model
                 return $value;
             }
 
-            return Storage::disk('public')->url($value);
+            return Storage::disk('do')->url($value);
         });
     }
 
