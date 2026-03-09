@@ -224,6 +224,66 @@ it('processFromParsed creates sentence words and stats', function () {
     expect($story->sentence_count)->toBe(1);
 });
 
+it('process assigns paragraph numbers from blank lines', function () {
+    $story = Story::factory()->create();
+    $service = app(StoryProcessingService::class);
+
+    $rawChinese = "你好。\n\n世界。";
+    $service->process($story, $rawChinese, ['Halo', 'Dunia']);
+
+    $sentences = StorySentence::where('story_id', $story->id)->orderBy('position')->get();
+    expect($sentences)->toHaveCount(2);
+    expect($sentences[0]->paragraph)->toBe(1);
+    expect($sentences[1]->paragraph)->toBe(2);
+});
+
+it('processFromParsed uses paragraph field from parsed data', function () {
+    $story = Story::factory()->create();
+    $service = app(StoryProcessingService::class);
+
+    $parsed = [
+        [
+            'text_zh' => '你好。',
+            'text_pinyin' => 'Nǐ hǎo.',
+            'translation_id' => 'Halo.',
+            'translation_en' => 'Hello.',
+            'paragraph' => 1,
+        ],
+        [
+            'text_zh' => '世界。',
+            'text_pinyin' => 'Shìjiè.',
+            'translation_id' => 'Dunia.',
+            'translation_en' => 'World.',
+            'paragraph' => 2,
+        ],
+    ];
+
+    $service->processFromParsed($story, $parsed);
+
+    $sentences = StorySentence::where('story_id', $story->id)->orderBy('position')->get();
+    expect($sentences[0]->paragraph)->toBe(1);
+    expect($sentences[1]->paragraph)->toBe(2);
+});
+
+it('processFromParsed defaults paragraph to 1 when not provided', function () {
+    $story = Story::factory()->create();
+    $service = app(StoryProcessingService::class);
+
+    $parsed = [
+        [
+            'text_zh' => '你好。',
+            'text_pinyin' => 'Nǐ hǎo.',
+            'translation_id' => 'Halo.',
+            'translation_en' => 'Hello.',
+        ],
+    ];
+
+    $service->processFromParsed($story, $parsed);
+
+    $sentence = StorySentence::where('story_id', $story->id)->first();
+    expect($sentence->paragraph)->toBe(1);
+});
+
 it('processFromParsed replaces existing sentences', function () {
     $story = Story::factory()->create();
     $service = app(StoryProcessingService::class);

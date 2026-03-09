@@ -27,6 +27,7 @@ class StorySentence extends Model
     protected $fillable = [
         'story_id',
         'position',
+        'paragraph',
         'text_zh',
         'text_pinyin',
         'translation_id',

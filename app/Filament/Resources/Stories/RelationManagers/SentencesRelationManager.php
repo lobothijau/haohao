@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\Stories\RelationManagers;
 
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -41,6 +41,8 @@ class SentencesRelationManager extends RelationManager
             ->recordTitleAttribute('position')
             ->columns([
                 TextColumn::make('position')
+                    ->sortable(),
+                TextColumn::make('paragraph')
                     ->sortable(),
                 TextColumn::make('text_zh')
                     ->label('Chinese')

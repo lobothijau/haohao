@@ -74,6 +74,42 @@ it('throws when sentence is missing required keys', function () {
     $parser->parse('你好。');
 })->throws(RuntimeException::class, "missing or invalid 'translation_id' key");
 
+it('assigns paragraph numbers based on blank lines in raw input', function () {
+    $mock = $this->mock(DeepSeekClient::class);
+    $response = json_encode(['sentences' => [
+        [
+            'text_zh' => '第一段。',
+            'text_pinyin' => 'Dì yī duàn.',
+            'translation_id' => 'Paragraf pertama.',
+            'translation_en' => 'First paragraph.',
+        ],
+        [
+            'text_zh' => '第二段。',
+            'text_pinyin' => 'Dì èr duàn.',
+            'translation_id' => 'Paragraf kedua.',
+            'translation_en' => 'Second paragraph.',
+        ],
+    ]]);
+    $mock->shouldReceive('chat')->once()->andReturn($response);
+
+    $parser = new AiStoryParser($mock);
+    $result = $parser->parse("第一段。\n\n第二段。");
+
+    expect($result[0]['paragraph'])->toBe(1);
+    expect($result[1]['paragraph'])->toBe(2);
+});
+
+it('assigns paragraph 1 to all sentences when no blank lines', function () {
+    $mock = $this->mock(DeepSeekClient::class);
+    $mock->shouldReceive('chat')->once()->andReturn(fakeParserResponse());
+
+    $parser = new AiStoryParser($mock);
+    $result = $parser->parse('小明每天早上六点起床。他喜欢喝咖啡。');
+
+    expect($result[0]['paragraph'])->toBe(1);
+    expect($result[1]['paragraph'])->toBe(1);
+});
+
 it('handles response without sentences wrapper key', function () {
     $mock = $this->mock(DeepSeekClient::class);
     $response = json_encode([

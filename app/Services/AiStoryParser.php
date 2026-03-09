@@ -14,7 +14,7 @@ class AiStoryParser
     /**
      * Parse raw Chinese text into structured sentences with pinyin and translations.
      *
-     * @return list<array{text_zh: string, text_pinyin: string, translation_id: string, translation_en: string}>
+     * @return list<array{text_zh: string, text_pinyin: string, translation_id: string, translation_en: string, paragraph: int}>
      *
      * @throws RuntimeException
      */
@@ -81,9 +81,54 @@ Return a JSON object with a "sentences" key containing an array of sentence obje
             }
         }
 
+        $sentences = $this->assignParagraphs($rawChinese, $sentences);
+
         Log::info('AiStoryParser: parsed successfully', [
             'sentence_count' => count($sentences),
         ]);
+
+        return $sentences;
+    }
+
+    /**
+     * Assign paragraph numbers to sentences by matching them to blocks in the raw input.
+     *
+     * @param  list<array{text_zh: string, text_pinyin: string, translation_id: string, translation_en: string}>  $sentences
+     * @return list<array{text_zh: string, text_pinyin: string, translation_id: string, translation_en: string, paragraph: int}>
+     */
+    private function assignParagraphs(string $rawChinese, array $sentences): array
+    {
+        $blocks = preg_split('/\n\s*\n/u', trim($rawChinese));
+        $blocks = array_values(array_filter(array_map('trim', $blocks), fn (string $b): bool => $b !== ''));
+
+        if (count($blocks) <= 1) {
+            foreach ($sentences as &$sentence) {
+                $sentence['paragraph'] = 1;
+            }
+
+            return $sentences;
+        }
+
+        $currentBlock = 0;
+
+        foreach ($sentences as &$sentence) {
+            $textZh = $sentence['text_zh'];
+            // Take first few characters to match against blocks
+            $prefix = mb_substr(preg_replace('/[\s\p{P}]/u', '', $textZh), 0, 4);
+
+            // Search forward from the current block
+            $matched = false;
+            for ($i = $currentBlock; $i < count($blocks); $i++) {
+                $blockClean = preg_replace('/[\s\p{P}]/u', '', $blocks[$i]);
+                if (mb_strpos($blockClean, $prefix) !== false) {
+                    $currentBlock = $i;
+                    $matched = true;
+                    break;
+                }
+            }
+
+            $sentence['paragraph'] = ($matched ? $currentBlock : $currentBlock) + 1;
+        }
 
         return $sentences;
     }

@@ -55,6 +55,7 @@ export type Category = {
 export type StorySentence = {
     id: number;
     position: number;
+    paragraph: number;
     text_zh: string;
     text_pinyin: string;
     translation_id: string;

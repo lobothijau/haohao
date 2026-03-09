@@ -50,6 +50,21 @@ const isAuthenticated = computed(() => !!page.props.auth?.user);
 const hasAudio = computed(() => props.sentences.some(s => s.audio_src));
 const { isPlaying, currentSentenceId, playbackSpeed, toggle: togglePlayback, setSpeed } = useAudioPlayer(props.sentences);
 
+const paragraphs = computed(() => {
+    const groups: { paragraph: number; sentences: StorySentence[] }[] = [];
+    let current: { paragraph: number; sentences: StorySentence[] } | null = null;
+
+    for (const sentence of props.sentences) {
+        if (!current || current.paragraph !== sentence.paragraph) {
+            current = { paragraph: sentence.paragraph, sentences: [] };
+            groups.push(current);
+        }
+        current.sentences.push(sentence);
+    }
+
+    return groups;
+});
+
 const showPinyin = ref(JSON.parse(localStorage.getItem('pref:show_pinyin') ?? 'true'));
 const showTranslation = ref(JSON.parse(localStorage.getItem('pref:show_translation') ?? 'false'));
 const selectedWordId = ref<number | null>(null);
@@ -243,64 +258,64 @@ function markComplete(): void {
             />
 
             <!-- Full Story Text -->
-            <div class="space-y-1 px-4 py-4">
-                <div
-                    v-for="sentence in sentences"
-                    :key="sentence.id"
-                    class="-mx-2 px-2 py-0.5 rounded-lg transition-colors"
-                    :class="{ 'bg-orange-500/10': currentSentenceId === sentence.id }"
-                >
-                    <!-- Chinese text with ruby pinyin -->
-                    <div class="flex items-start gap-1" :class="showPinyin ? 'leading-[1.75] -mb-[0.2em]' : 'leading-normal'">
-                    <div class="flex-1" :style="{ fontSize }">
-                        <template v-for="word in sentence.words" :key="word.id">
-                            <span v-if="splitPunctuation(word.surface_form).before">{{ splitPunctuation(word.surface_form).before }}</span>
-                            <Popover
-                                v-if="splitPunctuation(word.surface_form).word"
-                                :open="selectedWordId === word.id"
-                                @update:open="(open: boolean) => selectedWordId = open ? word.id : null"
+            <div class="space-y-6 px-4 py-4">
+                <div v-for="group in paragraphs" :key="group.paragraph">
+                    <!-- Paragraph: sentences flow inline -->
+                    <div class="indent-8" :class="showPinyin ? 'leading-[2.2]' : 'leading-normal'" :style="{ fontSize }">
+                        <template v-for="sentence in group.sentences" :key="sentence.id">
+                            <span
+                                class="inline rounded-lg transition-colors"
+                                :class="{ 'bg-orange-500/10': currentSentenceId === sentence.id }"
                             >
-                                <PopoverTrigger as-child>
-                                    <ruby
-                                        v-if="showPinyin && showPinyinBasedOnLevel(word)"
-                                        class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 text-center transition-colors cursor-pointer"
-                                        :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
+                                <template v-for="word in sentence.words" :key="word.id">
+                                    <span v-if="splitPunctuation(word.surface_form).before">{{ splitPunctuation(word.surface_form).before }}</span>
+                                    <Popover
+                                        v-if="splitPunctuation(word.surface_form).word"
+                                        :open="selectedWordId === word.id"
+                                        @update:open="(open: boolean) => selectedWordId = open ? word.id : null"
                                     >
-                                        {{ splitPunctuation(word.surface_form).word }}
-                                        <rt class="font-normal text-muted-foreground dark:text-white text-center antialiased">
-                                            {{ word.dictionary_entry.pinyin }}
-                                        </rt>
-                                    </ruby>
-                                    <span
-                                        v-else
-                                        class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
-                                        :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
-                                    >
-                                        {{ splitPunctuation(word.surface_form).word }}
-                                    </span>
-                                </PopoverTrigger>
-                                <WordTooltip
-                                    :word="word"
-                                    :is-saved="isWordSaved(word)"
-                                    :story-id="story.id"
-                                    :sentence-id="sentence.id"
-                                    @saved="onWordSaved"
-                                />
-                            </Popover>
-                            <span v-if="splitPunctuation(word.surface_form).after">{{ splitPunctuation(word.surface_form).after }}</span>
+                                        <PopoverTrigger as-child>
+                                            <ruby
+                                                v-if="showPinyin && showPinyinBasedOnLevel(word)"
+                                                class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 text-center transition-colors cursor-pointer"
+                                                :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
+                                            >
+                                                {{ splitPunctuation(word.surface_form).word }}
+                                                <rt class="font-normal text-muted-foreground dark:text-white text-center antialiased">
+                                                    {{ word.dictionary_entry.pinyin }}
+                                                </rt>
+                                            </ruby>
+                                            <span
+                                                v-else
+                                                class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
+                                                :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
+                                            >
+                                                {{ splitPunctuation(word.surface_form).word }}
+                                            </span>
+                                        </PopoverTrigger>
+                                        <WordTooltip
+                                            :word="word"
+                                            :is-saved="isWordSaved(word)"
+                                            :story-id="story.id"
+                                            :sentence-id="sentence.id"
+                                            @saved="onWordSaved"
+                                        />
+                                    </Popover>
+                                    <span v-if="splitPunctuation(word.surface_form).after">{{ splitPunctuation(word.surface_form).after }}</span>
+                                </template>
+                                <button
+                                    v-if="sentence.audio_src"
+                                    class="inline-flex align-middle justify-center items-center hover:bg-muted rounded-full size-6 text-muted-foreground hover:text-foreground transition-colors ml-0.5"
+                                    @click="playSentenceAudio(sentence.audio_src!)"
+                                >
+                                    <Volume2 class="size-3" />
+                                </button>
+                            </span>
                         </template>
                     </div>
-                    <button
-                        v-if="sentence.audio_src"
-                        class="inline-flex flex-shrink-0 justify-center items-center hover:bg-muted mt-1 rounded-full size-7 text-muted-foreground hover:text-foreground transition-colors"
-                        @click="playSentenceAudio(sentence.audio_src!)"
-                    >
-                        <Volume2 class="size-3.5" />
-                    </button>
-                    </div>
-                    <!-- Per-sentence translation -->
-                    <p v-if="showTranslation" class="text-muted-foreground text-sm md:text-base lg:text-lg">
-                        {{ sentence.translation_id }}
+                    <!-- Per-paragraph translations -->
+                    <p v-if="showTranslation" class="mt-2 indent-8 text-muted-foreground text-sm md:text-base lg:text-lg leading-relaxed">
+                        <span v-for="sentence in group.sentences" :key="'t-' + sentence.id">{{ sentence.translation_id }}&ensp;</span>
                     </p>
                 </div>
             </div>

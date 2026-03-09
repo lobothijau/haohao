@@ -20,6 +20,7 @@ class StorySentenceFactory extends Factory
         return [
             'story_id' => Story::factory(),
             'position' => fake()->numberBetween(1, 50),
+            'paragraph' => 1,
             'text_zh' => fake()->sentence(),
             'text_pinyin' => fake()->sentence(),
             'translation_id' => fake()->sentence(),

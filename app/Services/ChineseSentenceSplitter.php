@@ -40,4 +40,32 @@ class ChineseSentenceSplitter
 
         return $sentences;
     }
+
+    /**
+     * Split Chinese text into paragraphs, then sentences within each paragraph.
+     *
+     * @return list<array{paragraph: int, sentences: list<string>}>
+     */
+    public function splitWithParagraphs(string $text): array
+    {
+        $blocks = preg_split('/\n\s*\n/u', trim($text));
+        $result = [];
+
+        foreach ($blocks as $index => $block) {
+            $block = trim($block);
+            if ($block === '') {
+                continue;
+            }
+
+            $sentences = $this->split($block);
+            if (! empty($sentences)) {
+                $result[] = [
+                    'paragraph' => count($result) + 1,
+                    'sentences' => $sentences,
+                ];
+            }
+        }
+
+        return $result;
+    }
 }

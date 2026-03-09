@@ -29,7 +29,16 @@ class StoryProcessingService
         array $translationsId,
         array $translationsEn = [],
     ): array {
-        $sentences = $this->splitter->split($rawChinese);
+        $paragraphGroups = $this->splitter->splitWithParagraphs($rawChinese);
+
+        $sentences = [];
+        $paragraphMap = [];
+        foreach ($paragraphGroups as $group) {
+            foreach ($group['sentences'] as $sentence) {
+                $paragraphMap[] = $group['paragraph'];
+                $sentences[] = $sentence;
+            }
+        }
 
         if (count($sentences) !== count($translationsId)) {
             throw new InvalidArgumentException(
@@ -51,7 +60,7 @@ class StoryProcessingService
             );
         }
 
-        $result = DB::transaction(function () use ($story, $sentences, $translationsId, $translationsEn) {
+        $result = DB::transaction(function () use ($story, $sentences, $translationsId, $translationsEn, $paragraphMap) {
             // Delete existing sentences (supports re-processing)
             $story->sentences()->delete();
 
@@ -66,6 +75,7 @@ class StoryProcessingService
                 $sentence = StorySentence::create([
                     'story_id' => $story->id,
                     'position' => $position + 1,
+                    'paragraph' => $paragraphMap[$position],
                     'text_zh' => $textZh,
                     'text_pinyin' => '',
                     'translation_id' => $translationsId[$position],
@@ -151,6 +161,7 @@ class StoryProcessingService
                 $sentence = StorySentence::create([
                     'story_id' => $story->id,
                     'position' => $position + 1,
+                    'paragraph' => $parsed['paragraph'] ?? 1,
                     'text_zh' => $textZh,
                     'text_pinyin' => $parsed['text_pinyin'],
                     'translation_id' => $parsed['translation_id'],
