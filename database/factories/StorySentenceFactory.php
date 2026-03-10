@@ -22,7 +22,6 @@ class StorySentenceFactory extends Factory
             'position' => fake()->numberBetween(1, 50),
             'paragraph' => 1,
             'text_zh' => fake()->sentence(),
-            'text_pinyin' => fake()->sentence(),
             'translation_id' => fake()->sentence(),
             'translation_en' => fake()->sentence(),
             'audio_url' => null,

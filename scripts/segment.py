@@ -16,7 +16,7 @@ import jieba
 
 
 def segment(text: str) -> list[str]:
-    words = jieba.lcut(text)
+    words = jieba.lcut(text, HMM=False)
     return [w.strip() for w in words if w.strip()]
 
 

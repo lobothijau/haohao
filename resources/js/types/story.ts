@@ -57,7 +57,6 @@ export type StorySentence = {
     position: number;
     paragraph: number;
     text_zh: string;
-    text_pinyin: string;
     translation_id: string;
     translation_en: string | null;
     audio_src: string | null;

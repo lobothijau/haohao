@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Stories\RelationManagers;
 
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
@@ -18,12 +20,14 @@ class SentencesRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            Placeholder::make('text_zh')
+            Textarea::make('text_zh')
                 ->label('Chinese')
-                ->content(fn ($record): string => $record->text_zh),
-            Placeholder::make('text_pinyin')
-                ->label('Pinyin')
-                ->content(fn ($record): string => $record->text_pinyin),
+                ->required(),
+            TextInput::make('translation_id')
+                ->label('Translation (ID)')
+                ->required(),
+            TextInput::make('translation_en')
+                ->label('Translation (EN)'),
             FileUpload::make('audio_url')
                 ->label('Audio')
                 ->disk('do')
@@ -47,9 +51,6 @@ class SentencesRelationManager extends RelationManager
                 TextColumn::make('text_zh')
                     ->label('Chinese')
                     ->limit(40),
-                TextColumn::make('text_pinyin')
-                    ->label('Pinyin')
-                    ->limit(40),
                 TextColumn::make('translation_id')
                     ->label('Translation (ID)')
                     ->limit(40),
@@ -64,6 +65,7 @@ class SentencesRelationManager extends RelationManager
             ->defaultSort('position')
             ->actions([
                 EditAction::make(),
+                DeleteAction::make(),
             ]);
     }
 }

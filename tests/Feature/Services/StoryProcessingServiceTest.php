@@ -58,7 +58,7 @@ it('creates sentence words linked to dictionary entries', function () {
     expect($words[1]->surface_form)->toBe('好');
 });
 
-it('creates stub dictionary entries for unknown words', function () {
+it('skips words not found in dictionary without creating stubs', function () {
     $story = Story::factory()->create();
 
     $service = app(StoryProcessingService::class);
@@ -68,26 +68,38 @@ it('creates stub dictionary entries for unknown words', function () {
         ['Tidak diketahui'],
     );
 
-    // '未' and '知' should have stub entries created
-    expect(DictionaryEntry::where('simplified', '未')->exists())->toBeTrue();
-    expect(DictionaryEntry::where('simplified', '知')->exists())->toBeTrue();
+    // No stub entries should be created — words not in CC-CEDICT are skipped
+    $sentence = StorySentence::where('story_id', $story->id)->first();
+    $words = SentenceWord::where('story_sentence_id', $sentence->id)->get();
+    expect($words)->toHaveCount(0);
+    expect(DictionaryEntry::where('simplified', '未')->exists())->toBeFalse();
+    expect(DictionaryEntry::where('simplified', '知')->exists())->toBeFalse();
 });
 
-it('generates sentence pinyin from word-level dictionary lookups', function () {
-    DictionaryEntry::factory()->create(['simplified' => '你', 'pinyin' => 'nǐ']);
-    DictionaryEntry::factory()->create(['simplified' => '好', 'pinyin' => 'hǎo']);
+it('ignores existing stub entries and splits into characters instead', function () {
+    // Simulate a pre-existing stub entry where pinyin is hanzi (from old processing)
+    DictionaryEntry::factory()->create(['simplified' => '家有', 'pinyin' => '家有']);
+
+    // Real dictionary entries for individual characters
+    DictionaryEntry::factory()->create(['simplified' => '家', 'pinyin' => 'jiā']);
+    DictionaryEntry::factory()->create(['simplified' => '有', 'pinyin' => 'yǒu']);
+
+    $this->mock(ChineseSegmenter::class, function ($mock) {
+        $mock->shouldReceive('segment')->andReturn(['家有']);
+    });
 
     $story = Story::factory()->create();
-
     $service = app(StoryProcessingService::class);
-    $service->process(
-        $story,
-        '你好。',
-        ['Halo'],
-    );
+
+    $service->process($story, '家有。', ['Rumah punya']);
 
     $sentence = StorySentence::where('story_id', $story->id)->first();
-    expect($sentence->text_pinyin)->toBe('nǐ hǎo');
+    $words = SentenceWord::where('story_sentence_id', $sentence->id)->orderBy('position')->get();
+
+    // Should split into characters, not use the stub
+    expect($words)->toHaveCount(2);
+    expect($words[0]->surface_form)->toBe('家');
+    expect($words[1]->surface_form)->toBe('有');
 });
 
 it('calculates story stats correctly', function () {
@@ -170,7 +182,7 @@ it('calculates difficulty score from HSK levels', function () {
     expect($stats['difficulty_score'])->toBe(2.0);
 });
 
-it('processes from parsed AI output with provided pinyin', function () {
+it('processes from parsed AI output', function () {
     DictionaryEntry::factory()->create(['simplified' => '你', 'pinyin' => 'nǐ']);
     DictionaryEntry::factory()->create(['simplified' => '好', 'pinyin' => 'hǎo']);
 
@@ -180,7 +192,6 @@ it('processes from parsed AI output with provided pinyin', function () {
     $parsed = [
         [
             'text_zh' => '你好。',
-            'text_pinyin' => 'Nǐ hǎo.',
             'translation_id' => 'Halo.',
             'translation_en' => 'Hello.',
         ],
@@ -193,7 +204,6 @@ it('processes from parsed AI output with provided pinyin', function () {
 
     $sentence = StorySentence::where('story_id', $story->id)->first();
     expect($sentence->text_zh)->toBe('你好。');
-    expect($sentence->text_pinyin)->toBe('Nǐ hǎo.');
     expect($sentence->translation_id)->toBe('Halo.');
     expect($sentence->translation_en)->toBe('Hello.');
 });
@@ -208,7 +218,6 @@ it('processFromParsed creates sentence words and stats', function () {
     $parsed = [
         [
             'text_zh' => '小明。',
-            'text_pinyin' => 'Xiǎo Míng.',
             'translation_id' => 'Xiao Ming.',
             'translation_en' => 'Xiao Ming.',
         ],
@@ -244,14 +253,12 @@ it('processFromParsed uses paragraph field from parsed data', function () {
     $parsed = [
         [
             'text_zh' => '你好。',
-            'text_pinyin' => 'Nǐ hǎo.',
             'translation_id' => 'Halo.',
             'translation_en' => 'Hello.',
             'paragraph' => 1,
         ],
         [
             'text_zh' => '世界。',
-            'text_pinyin' => 'Shìjiè.',
             'translation_id' => 'Dunia.',
             'translation_en' => 'World.',
             'paragraph' => 2,
@@ -272,7 +279,6 @@ it('processFromParsed defaults paragraph to 1 when not provided', function () {
     $parsed = [
         [
             'text_zh' => '你好。',
-            'text_pinyin' => 'Nǐ hǎo.',
             'translation_id' => 'Halo.',
             'translation_en' => 'Hello.',
         ],
@@ -282,6 +288,52 @@ it('processFromParsed defaults paragraph to 1 when not provided', function () {
 
     $sentence = StorySentence::where('story_id', $story->id)->first();
     expect($sentence->paragraph)->toBe(1);
+});
+
+it('splits unknown compound words into individual characters with correct pinyin', function () {
+    // Simulate jieba returning a compound "家有" that is NOT in the dictionary
+    // but individual characters "家" and "有" ARE in the dictionary
+    $this->mock(ChineseSegmenter::class, function ($mock) {
+        $mock->shouldReceive('segment')
+            ->andReturn(['家有']);
+    });
+
+    DictionaryEntry::factory()->create(['simplified' => '家', 'pinyin' => 'jiā']);
+    DictionaryEntry::factory()->create(['simplified' => '有', 'pinyin' => 'yǒu']);
+
+    $story = Story::factory()->create();
+    $service = app(StoryProcessingService::class);
+
+    $service->process($story, '家有。', ['Rumah punya']);
+
+    $sentence = StorySentence::where('story_id', $story->id)->first();
+    $words = SentenceWord::where('story_sentence_id', $sentence->id)->orderBy('position')->get();
+
+    // Should be split into two separate words, not kept as one compound
+    expect($words)->toHaveCount(2);
+    expect($words[0]->surface_form)->toBe('家');
+    expect($words[1]->surface_form)->toBe('有');
+
+});
+
+it('skips unknown words not found in dictionary', function () {
+    $this->mock(ChineseSegmenter::class, function ($mock) {
+        $mock->shouldReceive('segment')
+            ->andReturn(['罕词']);
+    });
+
+    // Neither character is in the dictionary
+    $story = Story::factory()->create();
+    $service = app(StoryProcessingService::class);
+
+    $service->process($story, '罕词。', ['Kata langka']);
+
+    $sentence = StorySentence::where('story_id', $story->id)->first();
+    $words = SentenceWord::where('story_sentence_id', $sentence->id)->get();
+
+    // Word should be skipped entirely — no SentenceWord, no stub DictionaryEntry
+    expect($words)->toHaveCount(0);
+    expect(DictionaryEntry::where('simplified', '罕词')->exists())->toBeFalse();
 });
 
 it('processFromParsed replaces existing sentences', function () {
@@ -296,13 +348,11 @@ it('processFromParsed replaces existing sentences', function () {
     $parsed = [
         [
             'text_zh' => '你好。',
-            'text_pinyin' => 'Nǐ hǎo.',
             'translation_id' => 'Halo.',
             'translation_en' => 'Hello.',
         ],
         [
             'text_zh' => '世界。',
-            'text_pinyin' => 'Shìjiè.',
             'translation_id' => 'Dunia.',
             'translation_en' => 'World.',
         ],

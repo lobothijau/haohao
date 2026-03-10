@@ -71,40 +71,34 @@ class StoryProcessingService
                 // Segment the sentence
                 $words = $this->segmenter->segment($textZh);
 
-                // Create the sentence record (text_pinyin set to placeholder, updated after word processing)
                 $sentence = StorySentence::create([
                     'story_id' => $story->id,
                     'position' => $position + 1,
                     'paragraph' => $paragraphMap[$position],
                     'text_zh' => $textZh,
-                    'text_pinyin' => '',
                     'translation_id' => $translationsId[$position],
                     'translation_en' => $translationsEn[$position] ?? null,
                 ]);
 
                 // Process each word
-                $sentencePinyinParts = [];
+                $wordPositionCounter = 0;
 
-                foreach ($words as $wordPosition => $surfaceForm) {
-                    $dictionaryEntry = $this->findOrCreateDictionaryEntry($surfaceForm);
-                    $allDictionaryEntryIds[] = $dictionaryEntry->id;
+                foreach ($words as $surfaceForm) {
+                    $resolved = $this->resolveWords($surfaceForm);
 
-                    SentenceWord::create([
-                        'story_sentence_id' => $sentence->id,
-                        'dictionary_entry_id' => $dictionaryEntry->id,
-                        'position' => $wordPosition + 1,
-                        'surface_form' => $surfaceForm,
-                    ]);
+                    foreach ($resolved as $entry) {
+                        $allDictionaryEntryIds[] = $entry['dictionary_entry']->id;
 
-                    $sentencePinyinParts[] = $dictionaryEntry->pinyin;
+                        SentenceWord::create([
+                            'story_sentence_id' => $sentence->id,
+                            'dictionary_entry_id' => $entry['dictionary_entry']->id,
+                            'position' => ++$wordPositionCounter,
+                            'surface_form' => $entry['surface_form'],
+                        ]);
+                    }
                 }
 
-                // Update sentence pinyin from word-level lookups
-                $sentence->update([
-                    'text_pinyin' => implode(' ', $sentencePinyinParts),
-                ]);
-
-                $totalWords += count($words);
+                $totalWords += $wordPositionCounter;
             }
 
             // Calculate stats
@@ -143,7 +137,7 @@ class StoryProcessingService
     /**
      * Process a story from pre-parsed AI output (with pinyin and translations already provided).
      *
-     * @param  list<array{text_zh: string, text_pinyin: string, translation_id: string, translation_en: string}>  $parsedSentences
+     * @param  list<array{text_zh: string, translation_id: string, translation_en: string}>  $parsedSentences
      * @return array{sentence_count: int, word_count: int, unique_word_count: int, difficulty_score: float, estimated_minutes: int}
      */
     public function processFromParsed(Story $story, array $parsedSentences): array
@@ -163,24 +157,28 @@ class StoryProcessingService
                     'position' => $position + 1,
                     'paragraph' => $parsed['paragraph'] ?? 1,
                     'text_zh' => $textZh,
-                    'text_pinyin' => $parsed['text_pinyin'],
                     'translation_id' => $parsed['translation_id'],
                     'translation_en' => $parsed['translation_en'] ?: null,
                 ]);
 
-                foreach ($words as $wordPosition => $surfaceForm) {
-                    $dictionaryEntry = $this->findOrCreateDictionaryEntry($surfaceForm);
-                    $allDictionaryEntryIds[] = $dictionaryEntry->id;
+                $wordPositionCounter = 0;
 
-                    SentenceWord::create([
-                        'story_sentence_id' => $sentence->id,
-                        'dictionary_entry_id' => $dictionaryEntry->id,
-                        'position' => $wordPosition + 1,
-                        'surface_form' => $surfaceForm,
-                    ]);
+                foreach ($words as $surfaceForm) {
+                    $resolved = $this->resolveWords($surfaceForm);
+
+                    foreach ($resolved as $entry) {
+                        $allDictionaryEntryIds[] = $entry['dictionary_entry']->id;
+
+                        SentenceWord::create([
+                            'story_sentence_id' => $sentence->id,
+                            'dictionary_entry_id' => $entry['dictionary_entry']->id,
+                            'position' => ++$wordPositionCounter,
+                            'surface_form' => $entry['surface_form'],
+                        ]);
+                    }
                 }
 
-                $totalWords += count($words);
+                $totalWords += $wordPositionCounter;
             }
 
             $uniqueEntryIds = array_unique($allDictionaryEntryIds);
@@ -210,24 +208,51 @@ class StoryProcessingService
     }
 
     /**
-     * Find a dictionary entry by simplified form, or create a stub.
+     * Resolve a segmented token into one or more word entries.
+     *
+     * If the word exists in the dictionary, returns a single-element array.
+     * If not found but all individual characters exist, returns multiple elements (one per character).
+     * If no dictionary match at all, returns empty array (word is skipped).
+     *
+     * @return list<array{surface_form: string, dictionary_entry: DictionaryEntry}>
      */
-    private function findOrCreateDictionaryEntry(string $surfaceForm): DictionaryEntry
+    private function resolveWords(string $surfaceForm): array
     {
+        // Try exact match first (skip stubs where pinyin contains Chinese characters)
         $entry = DictionaryEntry::query()
             ->where('simplified', $surfaceForm)
             ->orderBy('frequency_rank')
             ->first();
 
-        if ($entry !== null) {
-            return $entry;
+        if ($entry !== null && ! preg_match('/\p{Han}/u', $entry->pinyin)) {
+            return [['surface_form' => $surfaceForm, 'dictionary_entry' => $entry]];
         }
 
-        // Create a stub entry for unknown words
-        return DictionaryEntry::create([
-            'simplified' => $surfaceForm,
-            'pinyin' => $surfaceForm,
-        ]);
+        // For multi-character tokens not in dictionary, try character-by-character split
+        if (mb_strlen($surfaceForm) > 1) {
+            $characters = mb_str_split($surfaceForm);
+            $charEntries = [];
+
+            foreach ($characters as $char) {
+                $charEntry = DictionaryEntry::query()
+                    ->where('simplified', $char)
+                    ->orderBy('frequency_rank')
+                    ->first();
+
+                if ($charEntry === null) {
+                    break;
+                }
+
+                $charEntries[] = ['surface_form' => $char, 'dictionary_entry' => $charEntry];
+            }
+
+            if (count($charEntries) === count($characters)) {
+                return $charEntries;
+            }
+        }
+
+        // No dictionary match — skip this word entirely
+        return [];
     }
 
     /**

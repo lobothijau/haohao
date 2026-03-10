@@ -29,7 +29,6 @@ class StorySentence extends Model
         'position',
         'paragraph',
         'text_zh',
-        'text_pinyin',
         'translation_id',
         'translation_en',
         'audio_url',

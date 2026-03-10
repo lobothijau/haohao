@@ -13,7 +13,6 @@ it('calls parser then processing service', function () {
     $parsed = [
         [
             'text_zh' => '你好。',
-            'text_pinyin' => 'Nǐ hǎo.',
             'translation_id' => 'Halo.',
             'translation_en' => 'Hello.',
             'paragraph' => 1,

@@ -280,9 +280,9 @@ function markComplete(): void {
                                                 class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 text-center transition-colors cursor-pointer"
                                                 :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
                                             >
-                                                {{ splitPunctuation(word.surface_form).word }}
+                                                {{ splitPunctuation(word.surface_form).word }}<span v-if="splitPunctuation(word.surface_form).after" class="inline">{{ splitPunctuation(word.surface_form).after }}</span>
                                                 <rt class="font-normal text-muted-foreground dark:text-white text-center antialiased">
-                                                    {{ word.dictionary_entry.pinyin }}
+                                                    {{ word.dictionary_entry.pinyin }}<span v-if="splitPunctuation(word.surface_form).after" class="invisible">{{ splitPunctuation(word.surface_form).after }}</span>
                                                 </rt>
                                             </ruby>
                                             <span
@@ -290,7 +290,7 @@ function markComplete(): void {
                                                 class="hover:bg-orange-500/10 rounded-lg hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
                                                 :class="{ 'bg-orange-500/10 text-orange-600 dark:text-orange-400': selectedWordId === word.id }"
                                             >
-                                                {{ splitPunctuation(word.surface_form).word }}
+                                                {{ splitPunctuation(word.surface_form).word }}{{ splitPunctuation(word.surface_form).after }}
                                             </span>
                                         </PopoverTrigger>
                                         <WordTooltip
@@ -301,7 +301,6 @@ function markComplete(): void {
                                             @saved="onWordSaved"
                                         />
                                     </Popover>
-                                    <span v-if="splitPunctuation(word.surface_form).after">{{ splitPunctuation(word.surface_form).after }}</span>
                                 </template>
                                 <button
                                     v-if="sentence.audio_src"
@@ -315,7 +314,7 @@ function markComplete(): void {
                     </div>
                     <!-- Per-paragraph translations -->
                     <p v-if="showTranslation" class="mt-2 indent-8 text-muted-foreground text-sm md:text-base lg:text-lg leading-relaxed">
-                        <span v-for="sentence in group.sentences" :key="'t-' + sentence.id">{{ sentence.translation_id }}&ensp;</span>
+                        {{ group.sentences.map(s => s.translation_id).join(' ') }}
                     </p>
                 </div>
             </div>

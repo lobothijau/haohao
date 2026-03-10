@@ -69,28 +69,24 @@ class StorySeeder extends Seeder
         $sentences = [
             [
                 'text_zh' => '我早上六点起床，然后吃早饭。',
-                'text_pinyin' => 'Wǒ zǎoshang liù diǎn qǐchuáng, ránhòu chī zǎofàn.',
                 'translation_id' => 'Saya bangun jam enam pagi, lalu sarapan.',
                 'translation_en' => 'I get up at six in the morning, then eat breakfast.',
                 'words' => [['我', '我'], ['早上', '早上'], ['六点', '六点'], ['起床', '起床'], ['然后', '，然后'], ['吃', '吃'], ['早饭', '早饭。']],
             ],
             [
                 'text_zh' => '八点我去学校上课。',
-                'text_pinyin' => 'Bā diǎn wǒ qù xuéxiào shàngkè.',
                 'translation_id' => 'Jam delapan saya pergi ke sekolah untuk mengikuti kelas.',
                 'translation_en' => 'At eight o\'clock I go to school for class.',
                 'words' => [['八点', '八点'], ['我', '我'], ['去', '去'], ['学校', '学校'], ['上课', '上课。']],
             ],
             [
                 'text_zh' => '下午我和朋友打篮球。',
-                'text_pinyin' => 'Xiàwǔ wǒ hé péngyou dǎ lánqiú.',
                 'translation_id' => 'Sore hari saya bermain basket dengan teman.',
                 'translation_en' => 'In the afternoon I play basketball with friends.',
                 'words' => [['下午', '下午'], ['我', '我'], ['和', '和'], ['朋友', '朋友'], ['打篮球', '打篮球。']],
             ],
             [
                 'text_zh' => '晚上我做作业，然后起床。',
-                'text_pinyin' => 'Wǎnshang wǒ zuò zuòyè, ránhòu qǐchuáng.',
                 'translation_id' => 'Malam hari saya mengerjakan PR, lalu tidur.',
                 'translation_en' => 'In the evening I do homework, then go to sleep.',
                 'words' => [['晚上', '晚上'], ['我', '我'], ['做', '做'], ['作业', '作业'], ['然后', '，然后'], ['起床', '起床。']],
@@ -155,35 +151,30 @@ class StorySeeder extends Seeder
         $sentences = [
             [
                 'text_zh' => '今天我们去了一家中国饭馆。',
-                'text_pinyin' => 'Jīntiān wǒmen qù le yī jiā Zhōngguó fànguǎn.',
                 'translation_id' => 'Hari ini kami pergi ke sebuah restoran Cina.',
                 'translation_en' => 'Today we went to a Chinese restaurant.',
                 'words' => [['今天', '今天'], ['我们', '我们'], ['去', '去'], ['了', '了'], ['一家', '一家'], ['中国', '中国'], ['饭馆', '饭馆。']],
             ],
             [
                 'text_zh' => '服务员给我们菜单。',
-                'text_pinyin' => 'Fúwùyuán gěi wǒmen càidān.',
                 'translation_id' => 'Pelayan memberi kami menu.',
                 'translation_en' => 'The waiter gave us the menu.',
                 'words' => [['服务员', '服务员'], ['给', '给'], ['我们', '我们'], ['菜单', '菜单。']],
             ],
             [
                 'text_zh' => '我点了宫保鸡丁和米饭。',
-                'text_pinyin' => 'Wǒ diǎn le gōngbǎo jīdīng hé mǐfàn.',
                 'translation_id' => 'Saya memesan ayam kung pao dan nasi.',
                 'translation_en' => 'I ordered kung pao chicken and rice.',
                 'words' => [['我', '我'], ['点', '点'], ['了', '了'], ['宫保鸡丁', '宫保鸡丁'], ['和', '和'], ['米饭', '米饭。']],
             ],
             [
                 'text_zh' => '菜很好吃，也不贵。',
-                'text_pinyin' => 'Cài hěn hǎochī, yě bù guì.',
                 'translation_id' => 'Masakannya sangat enak, juga tidak mahal.',
                 'translation_en' => 'The food was very delicious, and not expensive.',
                 'words' => [['菜', '菜'], ['很', '很'], ['好吃', '好吃'], ['也', '，也'], ['不', '不'], ['贵', '贵。']],
             ],
             [
                 'text_zh' => '下次我还想来！',
-                'text_pinyin' => 'Xià cì wǒ hái xiǎng lái!',
                 'translation_id' => 'Lain kali saya masih ingin datang lagi!',
                 'translation_en' => 'Next time I still want to come again!',
                 'words' => [['下次', '下次'], ['我', '我'], ['还', '还'], ['想', '想'], ['来', '来！']],
@@ -252,35 +243,30 @@ class StorySeeder extends Seeder
         $sentences = [
             [
                 'text_zh' => '去年夏天，我第一次坐飞机去北京。',
-                'text_pinyin' => 'Qùnián xiàtiān, wǒ dì yī cì zuò fēijī qù Běijīng.',
                 'translation_id' => 'Musim panas tahun lalu, saya pertama kali naik pesawat ke Beijing.',
                 'translation_en' => 'Last summer, I took an airplane to Beijing for the first time.',
                 'words' => [['去年', '去年'], ['夏天', '夏天'], ['我', '，我'], ['第一次', '第一次'], ['坐', '坐'], ['飞机', '飞机'], ['去', '去'], ['北京', '北京。']],
             ],
             [
                 'text_zh' => '在机场，人非常多，我有点儿紧张。',
-                'text_pinyin' => 'Zài jīchǎng, rén fēicháng duō, wǒ yǒudiǎnr jǐnzhāng.',
                 'translation_id' => 'Di bandara, orangnya sangat banyak, saya agak gugup.',
                 'translation_en' => 'At the airport, there were many people, and I was a little nervous.',
                 'words' => [['在', '在'], ['机场', '机场'], ['人', '，人'], ['非常', '非常'], ['多', '多'], ['我', '，我'], ['有点儿', '有点儿'], ['紧张', '紧张。']],
             ],
             [
                 'text_zh' => '飞机起飞的时候，我很害怕。',
-                'text_pinyin' => 'Fēijī qǐfēi de shíhou, wǒ hěn hàipà.',
                 'translation_id' => 'Saat pesawat lepas landas, saya sangat takut.',
                 'translation_en' => 'When the plane took off, I was very scared.',
                 'words' => [['飞机', '飞机'], ['起飞', '起飞'], ['的时候', '的时候'], ['我', '，我'], ['很', '很'], ['害怕', '害怕。']],
             ],
             [
                 'text_zh' => '但是从窗户看到云，我觉得很漂亮。',
-                'text_pinyin' => 'Dànshì cóng chuānghu kàndào yún, wǒ juéde hěn piàoliang.',
                 'translation_id' => 'Tetapi melihat awan dari jendela, saya merasa sangat indah.',
                 'translation_en' => 'But seeing the clouds from the window, I felt it was very beautiful.',
                 'words' => [['但是', '但是'], ['从', '从'], ['窗户', '窗户'], ['看到', '看到'], ['云', '云'], ['我', '，我'], ['觉得', '觉得'], ['很', '很'], ['漂亮', '漂亮。']],
             ],
             [
                 'text_zh' => '到了北京，我非常开心！',
-                'text_pinyin' => 'Dào le Běijīng, wǒ fēicháng kāixīn!',
                 'translation_id' => 'Sampai di Beijing, saya sangat senang!',
                 'translation_en' => 'When I arrived in Beijing, I was extremely happy!',
                 'words' => [['到', '到'], ['了', '了'], ['北京', '北京'], ['我', '，我'], ['非常', '非常'], ['开心', '开心！']],
@@ -316,7 +302,7 @@ class StorySeeder extends Seeder
     /**
      * Create sentences and their words for a story.
      *
-     * @param  list<array{text_zh: string, text_pinyin: string, translation_id: string, translation_en: string, words: list<array{0: string, 1: string}>}>  $sentencesData
+     * @param  list<array{text_zh: string, translation_id: string, translation_en: string, words: list<array{0: string, 1: string}>}>  $sentencesData
      * @param  array<string, DictionaryEntry>  $entries
      */
     private function createSentences(Story $story, array $sentencesData, array $entries): void
@@ -326,7 +312,6 @@ class StorySeeder extends Seeder
                 'story_id' => $story->id,
                 'position' => $index + 1,
                 'text_zh' => $data['text_zh'],
-                'text_pinyin' => $data['text_pinyin'],
                 'translation_id' => $data['translation_id'],
                 'translation_en' => $data['translation_en'],
             ]);

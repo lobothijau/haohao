@@ -8,13 +8,11 @@ function fakeParserResponse(): string
     return json_encode(['sentences' => [
         [
             'text_zh' => '小明每天早上六点起床。',
-            'text_pinyin' => 'Xiǎo Míng měitiān zǎoshang liù diǎn qǐchuáng.',
             'translation_id' => 'Xiao Ming bangun setiap hari jam enam pagi.',
             'translation_en' => 'Xiao Ming wakes up at six every morning.',
         ],
         [
             'text_zh' => '他喜欢喝咖啡。',
-            'text_pinyin' => 'Tā xǐhuān hē kāfēi.',
             'translation_id' => 'Dia suka minum kopi.',
             'translation_en' => 'He likes to drink coffee.',
         ],
@@ -30,7 +28,6 @@ it('parses Chinese text into structured sentences', function () {
 
     expect($result)->toHaveCount(2);
     expect($result[0]['text_zh'])->toBe('小明每天早上六点起床。');
-    expect($result[0]['text_pinyin'])->toBe('Xiǎo Míng měitiān zǎoshang liù diǎn qǐchuáng.');
     expect($result[0]['translation_id'])->toBe('Xiao Ming bangun setiap hari jam enam pagi.');
     expect($result[0]['translation_en'])->toBe('Xiao Ming wakes up at six every morning.');
 });
@@ -67,7 +64,7 @@ it('throws on empty sentences array', function () {
 it('throws when sentence is missing required keys', function () {
     $mock = $this->mock(DeepSeekClient::class);
     $mock->shouldReceive('chat')->once()->andReturn(json_encode(['sentences' => [
-        ['text_zh' => '你好。', 'text_pinyin' => 'Nǐ hǎo.'],
+        ['text_zh' => '你好。'],
     ]]));
 
     $parser = new AiStoryParser($mock);
@@ -79,13 +76,11 @@ it('assigns paragraph numbers based on blank lines in raw input', function () {
     $response = json_encode(['sentences' => [
         [
             'text_zh' => '第一段。',
-            'text_pinyin' => 'Dì yī duàn.',
             'translation_id' => 'Paragraf pertama.',
             'translation_en' => 'First paragraph.',
         ],
         [
             'text_zh' => '第二段。',
-            'text_pinyin' => 'Dì èr duàn.',
             'translation_id' => 'Paragraf kedua.',
             'translation_en' => 'Second paragraph.',
         ],
@@ -115,7 +110,6 @@ it('handles response without sentences wrapper key', function () {
     $response = json_encode([
         [
             'text_zh' => '你好。',
-            'text_pinyin' => 'Nǐ hǎo.',
             'translation_id' => 'Halo.',
             'translation_en' => 'Hello.',
         ],
